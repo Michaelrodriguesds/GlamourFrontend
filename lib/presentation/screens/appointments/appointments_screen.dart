@@ -67,7 +67,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
         _nameCtrl.text  = apt.clientName;
         _priceCtrl.text = apt.price.toStringAsFixed(0);
         _notesCtrl.text = apt.notes;
-        _procedure      = apt.procedure;
+        _procedure      = apt.procedures.isNotEmpty ? apt.procedures.first : '';
         _location       = apt.location;
         _payMethod      = apt.paymentMethod;
         _date           = apt.date;
@@ -89,7 +89,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
       final apt = Appointment(
         id:            _editId ?? '',
         clientName:    _nameCtrl.text.trim(),
-        procedure:     _procedure,
+        procedures:    [_procedure],
         date:          _date,
         time:          _time,
         location:      _location,

@@ -20,39 +20,7 @@ class DaySlotsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final freeCount   = slots.where((s) =>  s.available).length;
-    final bookedCount = slots.where((s) => !s.available).length;
-
     return Column(children: [
-      // ── Header ──────────────────────────────────
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '📅 ${AppDateUtils.toFullDate(date)}',
-              style: const TextStyle(
-                  color: AppColors.textMuted, fontSize: 11, letterSpacing: 1.2),
-            ),
-            if (slots.isNotEmpty)
-              Row(children: [
-                if (bookedCount > 0) ...[
-                  _PillBadge(
-                      '$bookedCount ocupado${bookedCount != 1 ? 's' : ''}',
-                      AppColors.rose),
-                  const SizedBox(width: 6),
-                ],
-                _PillBadge(
-                  freeCount > 0
-                      ? '$freeCount livre${freeCount != 1 ? 's' : ''}'
-                      : 'Lotado',
-                  freeCount > 0 ? AppColors.green : AppColors.textDim,
-                ),
-              ]),
-          ],
-        ),
-      ),
 
       // ── Lista de slots ───────────────────────────
       Expanded(
@@ -63,7 +31,7 @@ class DaySlotsWidget extends StatelessWidget {
             : slots.isEmpty
                 ? _EmptyDay(date: date)
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
                     itemCount: slots.length,
                     itemBuilder: (_, i) => _SlotRow(
                       slot: slots[i],
@@ -100,7 +68,7 @@ class _SlotRow extends StatelessWidget {
     // Cor: não confirmado → gold | confirmado → cor do procedimento
     final Color accentColor = isBooked
         ? (slot.confirmed
-            ? AppColors.forProcedure(slot.procedure ?? '')
+            ? AppColors.forProcedure(slot.procedure)
             : AppColors.gold)
         : AppColors.green;
 
@@ -140,8 +108,8 @@ class _SlotRow extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(children: [
                     // Horário
-                    SizedBox(
-                      width: 44,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 38, maxWidth: 48),
                       child: Text(
                         slot.time,
                         style: TextStyle(
@@ -206,7 +174,7 @@ class _SlotRow extends StatelessWidget {
                                 const SizedBox(height: 2),
                                 Text(
                                   '${AppStrings.procedureIcons[slot.procedure] ?? '✨'}'
-                                  ' ${slot.procedure ?? ''}  ·  '
+                                  ' ${slot.procedure}  ·  '
                                   '${slot.location?.replaceAll('Studio ', '') ?? ''}',
                                   style: const TextStyle(
                                       color:    AppColors.textMuted,
@@ -247,26 +215,6 @@ class _SlotRow extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Pill badge ────────────────────────────────────────────────────
-
-class _PillBadge extends StatelessWidget {
-  final String label;
-  final Color  color;
-  const _PillBadge(this.label, this.color);
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-    decoration: BoxDecoration(
-      color:        color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(10),
-      border:       Border.all(color: color.withValues(alpha: 0.35)),
-    ),
-    child: Text(label,
-        style: TextStyle(
-            color: color, fontSize: 9, fontWeight: FontWeight.w700)),
-  );
 }
 
 // ── Estado vazio ──────────────────────────────────────────────────

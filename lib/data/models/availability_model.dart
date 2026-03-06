@@ -36,31 +36,55 @@ class DayAvailability {
 
 /// Informação de um slot de horário no dia
 class TimeSlot {
-  final String  time;
-  final bool    available;
-  final String? clientName;
-  final String? procedure;
-  final String? location;
-  final String? appointmentId;
-  final bool    confirmed;   // ← novo: false = aguardando confirmação
+  final String       time;
+  final bool         available;
+  final String?      clientName;
+  final List<String> procedures;   // ← lista de procedimentos (novo)
+  final String?      location;
+  final String?      appointmentId;
+  final bool         confirmed;
 
   const TimeSlot({
     required this.time,
     required this.available,
     this.clientName,
-    this.procedure,
+    this.procedures = const [],
     this.location,
     this.appointmentId,
     this.confirmed = false,
   });
 
+  /// String de exibição: "Cílios + Sobrancelha com Henna"
+  String get procedure =>
+      procedures.isNotEmpty ? procedures.join(' + ') : '';
+
   factory TimeSlot.fromJson(Map<String, dynamic> json) {
     final apt = json['appointment'];
+
+    // Lê procedimentos: suporta formato novo (array) e legado (string)
+    List<String> procedures = const [];
+    if (apt != null) {
+      final rawProcs = apt['procedures'];
+      if (rawProcs != null && rawProcs is List && rawProcs.isNotEmpty) {
+        procedures = List<String>.from(rawProcs);
+      } else {
+        // Fallback: lê do campo legado `procedure` e divide por " + "
+        final legacy = apt['procedure']?.toString() ?? '';
+        if (legacy.isNotEmpty) {
+          procedures = legacy
+              .split(' + ')
+              .map((s) => s.trim())
+              .where((s) => s.isNotEmpty)
+              .toList();
+        }
+      }
+    }
+
     return TimeSlot(
       time:          json['time'],
       available:     json['available'] ?? true,
       clientName:    apt?['clientName'],
-      procedure:     apt?['procedure'],
+      procedures:    procedures,
       location:      apt?['location'],
       appointmentId: apt?['id'],
       confirmed:     apt?['confirmed'] ?? false,

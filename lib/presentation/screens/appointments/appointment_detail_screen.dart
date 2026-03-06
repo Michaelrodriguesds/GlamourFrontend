@@ -207,15 +207,21 @@ class _Body extends StatelessWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '$procIcon ${apt.procedure}',
-                    style: TextStyle(
-                      color: procColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                  Flexible(
+                    child: Text(
+                      '$procIcon ${apt.procedure}',
+                      style: TextStyle(
+                        color: procColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
                     'R\$ ${apt.price.toStringAsFixed(0)}',
                     style: const TextStyle(
@@ -231,9 +237,11 @@ class _Body extends StatelessWidget {
                 apt.clientName,
                 style: const TextStyle(
                   color: AppColors.text,
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
               const SizedBox(height: 4),
               Text(

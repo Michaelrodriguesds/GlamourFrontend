@@ -1,23 +1,23 @@
 class Appointment {
-  final String   id;
-  final String   clientName;
-  final String   procedure;
-  final DateTime date;       // Sempre armazenado como meia-noite UTC
-  final String   time;
-  final String   location;
-  final double   price;
-  final String   paymentMethod;
-  final bool     paid;
-  final DateTime? paidAt;
-  final bool     confirmed;
-  final DateTime? confirmedAt;
-  final String   notes;
-  final DateTime createdAt;
+  final String        id;
+  final String        clientName;
+  final List<String>  procedures;   // ← lista de procedimentos selecionados
+  final DateTime      date;         // Sempre armazenado como meia-noite UTC
+  final String        time;
+  final String        location;
+  final double        price;
+  final String        paymentMethod;
+  final bool          paid;
+  final DateTime?     paidAt;
+  final bool          confirmed;
+  final DateTime?     confirmedAt;
+  final String        notes;
+  final DateTime      createdAt;
 
   const Appointment({
     required this.id,
     required this.clientName,
-    required this.procedure,
+    required this.procedures,
     required this.date,
     required this.time,
     required this.location,
@@ -31,26 +31,41 @@ class Appointment {
     required this.createdAt,
   });
 
+  /// String de exibição: "Cílios + Sobrancelha com Henna"
+  String get procedure => procedures.join(' + ');
+
   factory Appointment.fromJson(Map<String, dynamic> json) {
     // Normaliza a data: extrai apenas ano/mês/dia, ignora horário
     final rawDate = DateTime.parse(json['date']);
     final date    = DateTime.utc(rawDate.year, rawDate.month, rawDate.day);
 
+    // Suporta formato novo (procedures: [...]) e legado (procedure: "string")
+    List<String> procedures;
+    final rawProcs = json['procedures'];
+    if (rawProcs != null && rawProcs is List && rawProcs.isNotEmpty) {
+      procedures = List<String>.from(rawProcs);
+    } else {
+      final legacy = json['procedure']?.toString() ?? '';
+      procedures   = legacy.isNotEmpty ? [legacy] : [];
+    }
+
     return Appointment(
       id:            json['_id']?.toString() ?? json['id']?.toString() ?? '',
-      clientName:    json['clientName'] ?? '',
-      procedure:     json['procedure'] ?? '',
+      clientName:    json['clientName']  ?? '',
+      procedures:    procedures,
       date:          date,
-      time:          json['time'] ?? '',
-      location:      json['location'] ?? '',
-      price:         (json['price'] ?? 0).toDouble(),
+      time:          json['time']        ?? '',
+      location:      json['location']    ?? '',
+      price:         (json['price']      ?? 0).toDouble(),
       paymentMethod: json['paymentMethod'] ?? '',
-      paid:          json['paid'] ?? false,
-      paidAt:        json['paidAt'] != null ? DateTime.parse(json['paidAt']) : null,
-      confirmed:     json['confirmed'] ?? false,
+      paid:          json['paid']        ?? false,
+      paidAt:        json['paidAt']      != null ? DateTime.parse(json['paidAt'])      : null,
+      confirmed:     json['confirmed']   ?? false,
       confirmedAt:   json['confirmedAt'] != null ? DateTime.parse(json['confirmedAt']) : null,
-      notes:         json['notes'] ?? '',
-      createdAt:     json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+      notes:         json['notes']       ?? '',
+      createdAt:     json['createdAt']   != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
     );
   }
 
@@ -58,7 +73,8 @@ class Appointment {
     // Envia data como YYYY-MM-DD para evitar problemas de timezone
     'date':          '${date.year}-${date.month.toString().padLeft(2,'0')}-${date.day.toString().padLeft(2,'0')}',
     'clientName':    clientName,
-    'procedure':     procedure,
+    'procedures':    procedures,          // ← array para o backend
+    'procedure':     procedure,           // ← string calculada (retrocompatibilidade)
     'time':          time,
     'location':      location,
     'price':         price,
@@ -69,16 +85,24 @@ class Appointment {
   };
 
   Appointment copyWith({
-    String?   id,          String?   clientName, String?   procedure,
-    DateTime? date,        String?   time,        String?   location,
-    double?   price,       String?   paymentMethod,
-    bool?     paid,        DateTime? paidAt,
-    bool?     confirmed,   DateTime? confirmedAt,
-    String?   notes,       DateTime? createdAt,
+    String?        id,
+    String?        clientName,
+    List<String>?  procedures,
+    DateTime?      date,
+    String?        time,
+    String?        location,
+    double?        price,
+    String?        paymentMethod,
+    bool?          paid,
+    DateTime?      paidAt,
+    bool?          confirmed,
+    DateTime?      confirmedAt,
+    String?        notes,
+    DateTime?      createdAt,
   }) => Appointment(
     id:            id            ?? this.id,
     clientName:    clientName    ?? this.clientName,
-    procedure:     procedure     ?? this.procedure,
+    procedures:    procedures    ?? this.procedures,
     date:          date          ?? this.date,
     time:          time          ?? this.time,
     location:      location      ?? this.location,
