@@ -1,0 +1,54 @@
+name: agenda_flutter
+description: Glamour Agenda — App de agendamento estético para iOS
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── Gerenciamento de estado ──────────────────
+  flutter_riverpod: ^2.4.0
+
+  # ── HTTP Client ──────────────────────────────
+  dio: ^5.3.2
+
+  # ── Armazenamento seguro do JWT ──────────────
+  flutter_secure_storage: ^9.0.0
+
+  # ── Variáveis de ambiente (.env) ─────────────
+  flutter_dotenv: ^5.1.0
+
+  # ── Calendário mensal ────────────────────────
+  table_calendar: ^3.0.9
+
+  # ── Gráficos (tela de stats) ─────────────────
+  fl_chart: ^0.65.0
+
+  # ── Notificações locais ───────────────────────
+  flutter_local_notifications: ^17.0.0
+
+  # ── Timezone (necessário para notificações) ───
+  timezone: ^0.9.2
+
+  # ── Formatação de datas em pt-BR ─────────────
+  intl: ^0.19.0
+
+  # ── Ícones e fontes ───────────────────────────
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  # ── O arquivo .env precisa estar listado como asset ──
+  assets:
+    - .env
