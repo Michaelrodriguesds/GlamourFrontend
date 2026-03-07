@@ -1,4 +1,5 @@
 # Miscellaneous
+
 *.class
 *.log
 *.pyc
@@ -13,15 +14,18 @@
 migrate_working_dir/
 
 # IntelliJ / Android Studio
+
 *.iml
 *.ipr
 *.iws
 .idea/
 
 # VS Code
+
 .vscode/
 
 # Flutter / Dart
+
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -31,19 +35,23 @@ migrate_working_dir/
 build/
 coverage/
 
-# Generated plugin registrant
-lib/generated_plugin_registrant.dart
-
 # API docs
+
 doc/api/
 
+# Environment variables
+
+.env
+
 # iOS
+
 ios/Flutter/.last_build_id
 ios/Pods/
 ios/.symlinks/
 ios/Runner/GeneratedPluginRegistrant.*
 
 # Android
+
 android/.gradle/
 android/app/debug
 android/app/profile
@@ -52,7 +60,9 @@ local.properties
 key.properties
 
 # Obfuscation
+
 app.*.map.json
 
 # Symbols
+
 app.*.symbols
