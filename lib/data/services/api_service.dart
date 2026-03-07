@@ -6,13 +6,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class ApiService {
   static const _tokenKey = 'jwt_token';
 
-  // flutter_secure_storage funciona no web via localStorage
-  // No iOS usa o Keychain, no Android usa EncryptedSharedPreferences
   static final _storage = const FlutterSecureStorage(
     webOptions: WebOptions(dbName: 'glamour_agenda', publicKey: 'glamour'),
   );
 
-  // ── Singleton ─────────────────────────────
+  // ── Singleton ──────────────────────────────────────────────────
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal() {
@@ -20,8 +18,8 @@ class ApiService {
   }
 
   final Dio dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 15),
+    connectTimeout: const Duration(seconds: 40),
+    receiveTimeout: const Duration(seconds: 40),
     headers: {'Content-Type': 'application/json'},
   ));
 
@@ -85,9 +83,11 @@ class ApiService {
     }
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
-        return 'Servidor não respondeu. Verifique se o backend está rodando.';
+        return 'Servidor demorou para responder. Tente novamente em alguns segundos.';
+      case DioExceptionType.receiveTimeout:
+        return 'Servidor demorou para responder. Tente novamente.';
       case DioExceptionType.connectionError:
-        return 'Sem conexão com o servidor. No web, verifique o CORS no backend.';
+        return 'Sem conexão com o servidor.';
       default:
         return e.message ?? 'Erro de rede';
     }
