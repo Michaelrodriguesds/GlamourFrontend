@@ -1,14 +1,6 @@
 [build]
-  command = """
-    curl -sS https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.22.0-stable.tar.xz | tar -xJ -C /opt && \
-    export PATH="$PATH:/opt/flutter/bin" && \
-    flutter config --enable-web --no-analytics && \
-    flutter pub get && \
-    flutter build web --release
-  """
+  command = "bash build_flutter.sh"
   publish = "build/web"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+[build.environment]
+  FLUTTER_VERSION = "3.35.6"
