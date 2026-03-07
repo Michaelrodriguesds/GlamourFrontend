@@ -1,26 +1,28 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 /// URLs de todos os endpoints da API
 class ApiEndpoints {
   ApiEndpoints._();
 
-  /// Base URL lida do .env
-  static String get base => dotenv.env['API_URL'] ?? 'http://localhost:5000';
+  // ── Base URL ────────────────────────────────────────────────────
+  // 🌐 Produção (Render):
+  static const _base = 'https://glamourbackend-bd05.onrender.com';
 
-  // ── Auth ───────────────────────────────────
-  static String get login        => '$base/api/auth/login';
-  static String get verify       => '$base/api/auth/verify';
+  // 💻 Desenvolvimento local (descomente para testar no PC):
+  // static const _base = 'http://localhost:5000';
 
-  // ── Agendamentos ───────────────────────────
-  static String get appointments => '$base/api/appointments';
-  static String appointmentById(String id) => '$base/api/appointments/$id';
-  static String payAppointment(String id)  => '$base/api/appointments/$id/pay';
-  static String confirmAppointment(String id) => '$base/api/appointments/$id/confirm';
+  // ── Auth ────────────────────────────────────────────────────────
+  static String get login        => '$_base/api/auth/login';
+  static String get verify       => '$_base/api/auth/verify';
 
-  // ── Disponibilidade ────────────────────────
-  static String get availability      => '$base/api/availability';
-  static String get monthAvailability => '$base/api/availability/month';
+  // ── Agendamentos ─────────────────────────────────────────────────
+  static String get appointments => '$_base/api/appointments';
+  static String appointmentById(String id) => '$_base/api/appointments/$id';
+  static String payAppointment(String id)  => '$_base/api/appointments/$id/pay';
+  static String confirmAppointment(String id) => '$_base/api/appointments/$id/confirm';
 
-  // ── Estatísticas ───────────────────────────
-  static String get monthlyStats => '$base/api/stats/monthly';
+  // ── Disponibilidade ───────────────────────────────────────────────
+  static String get availability      => '$_base/api/availability';
+  static String get monthAvailability => '$_base/api/availability/month';
+
+  // ── Estatísticas ──────────────────────────────────────────────────
+  static String get monthlyStats => '$_base/api/stats/monthly';
 }

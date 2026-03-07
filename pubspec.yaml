@@ -19,9 +19,6 @@ dependencies:
   # ── Armazenamento seguro do JWT ──────────────
   flutter_secure_storage: ^9.0.0
 
-  # ── Variáveis de ambiente (.env) ─────────────
-  flutter_dotenv: ^5.1.0
-
   # ── Calendário mensal ────────────────────────
   table_calendar: ^3.0.9
 
@@ -48,7 +45,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # ── O arquivo .env precisa estar listado como asset ──
-  assets:
-    - .env
