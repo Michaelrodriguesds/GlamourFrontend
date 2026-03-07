@@ -1,0 +1,10 @@
+[build]
+  command = """
+    wget -qO flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_latest-stable.tar.xz && \
+    tar -xf flutter.tar.xz -C $HOME && \
+    export PATH="$HOME/flutter/bin:$PATH" && \
+    flutter config --enable-web && \
+    flutter pub get && \
+    flutter build web --release
+  """
+  publish = "build/web"
