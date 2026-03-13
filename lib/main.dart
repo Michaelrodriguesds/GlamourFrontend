@@ -8,6 +8,7 @@ import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/calendar/calendar_screen.dart';
 import 'presentation/screens/appointments/appointment_form_screen.dart';
 import 'presentation/screens/stats/stats_screen.dart';
+import 'presentation/screens/notes/notes_screen.dart';
 import 'presentation/screens/clients/clients_screen.dart';
 import 'presentation/widgets/bottom_nav.dart';
 import 'providers/auth_provider.dart';
@@ -52,13 +53,29 @@ class _MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<_MainShell> {
   int _index = 0;
 
-  // 4 telas no IndexedStack — "Novo" abre como modal separado
+  // 5 telas no IndexedStack:
+  //   0 = Início, 1 = Calendário, 2 = Stats, 3 = Notas, 4 = Clientes
+  // O "Novo" (nav index 2) abre como modal separado
   static const List<Widget> _screens = [
     HomeScreen(),
     CalendarScreen(),
     StatsScreen(),
+    NotesScreen(),
     ClientsScreen(),
   ];
+
+  // Mapeamento: nav index → screen index
+  //   nav:    0  1  [2=modal]  3   4   5
+  //   screen: 0  1             2   3   4
+  int _navToScreen(int navIndex) {
+    if (navIndex > 2) return navIndex - 1;
+    return navIndex;
+  }
+
+  int _screenToNav(int screenIndex) {
+    if (screenIndex >= 2) return screenIndex + 1;
+    return screenIndex;
+  }
 
   void _onNavTap(int navIndex) {
     if (navIndex == 2) {
@@ -70,30 +87,24 @@ class _MainShellState extends ConsumerState<_MainShell> {
           builder: (_) => const AppointmentFormScreen(),
         ),
       ).then((_) {
-        // Ao fechar o formulário → força reload de todas as telas
         ref.read(refreshProvider.notifier).state++;
       });
       return;
     }
 
-    // Converte índice da nav (0,1,3,4) → índice do IndexedStack (0,1,2,3)
-    final screenIndex = navIndex > 2 ? navIndex - 1 : navIndex;
+    final screenIndex = _navToScreen(navIndex);
 
     if (screenIndex != _index) {
-      // Ao trocar de aba → força reload da tela de destino
       ref.read(refreshProvider.notifier).state++;
     }
     setState(() => _index = screenIndex);
   }
 
-  // Nav index leva em conta que "Novo" é a posição 2
-  int get _navIndex => _index >= 2 ? _index + 1 : _index;
-
   @override
   Widget build(BuildContext context) => Scaffold(
     body: IndexedStack(index: _index, children: _screens),
     bottomNavigationBar: AppBottomNav(
-      currentIndex: _navIndex,
+      currentIndex: _screenToNav(_index),
       onTap: _onNavTap,
     ),
   );
@@ -107,7 +118,9 @@ class _SplashScreen extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('🌸', style: TextStyle(fontSize: 60)),
         SizedBox(height: 16),
-        Text('Glamour Agenda', style: TextStyle(color: Color(0xFFF5EEF8), fontSize: 24, fontWeight: FontWeight.w700)),
+        Text('Glamour Agenda',
+            style: TextStyle(
+                color: Color(0xFFF5EEF8), fontSize: 24, fontWeight: FontWeight.w700)),
         SizedBox(height: 24),
         CircularProgressIndicator(color: Color(0xFFE8527A), strokeWidth: 2.5),
       ]),

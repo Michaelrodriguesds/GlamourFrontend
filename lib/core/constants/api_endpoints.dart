@@ -7,7 +7,7 @@ class ApiEndpoints {
   static const _base = 'https://glamourbackend-bd05.onrender.com';
 
   // 💻 Desenvolvimento local (descomente para testar no PC):
-  // static const _base = 'http://localhost:5000';
+   //static const _base = 'http://localhost:5000';
 
   // ── Auth ────────────────────────────────────────────────────────
   static String get login        => '$_base/api/auth/login';
@@ -25,4 +25,9 @@ class ApiEndpoints {
 
   // ── Estatísticas ──────────────────────────────────────────────────
   static String get monthlyStats => '$_base/api/stats/monthly';
+
+  // ── Anotações Gerais ──────────────────────────────────────────────
+  static String get notes            => '$_base/api/notes';
+  static String noteById(String id)  => '$_base/api/notes/$id';
+  static String pinNote(String id)   => '$_base/api/notes/$id/pin';
 }

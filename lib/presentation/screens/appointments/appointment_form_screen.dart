@@ -37,16 +37,16 @@ class _Proc {
   };
 
   static Color colorOf(String proc) {
-    switch (proc) {
-      case ciliosTufinho:     return AppColors.ciliosTufinho;
-      case sobrancelhaHenna:  return AppColors.green;
-      case sobrancelhaLamina: return AppColors.rose;
-      case spaLabios:         return const Color(0xFFFF9898);
-      case depilacao:         return const Color(0xFF98CFFF);
-      case limpezaPele:       return AppColors.gold;
-      default:                return AppColors.lavender;
-    }
+  switch (proc) {
+    case _Proc.ciliosTufinho:     return AppColors.ciliosTufinho;
+    case _Proc.sobrancelhaHenna:  return AppColors.green;
+    case _Proc.sobrancelhaLamina: return AppColors.rose;
+    case _Proc.spaLabios:         return const Color(0xFFFF9898);
+    case _Proc.depilacao:         return const Color(0xFF98CFFF);
+    case _Proc.limpezaPele:       return AppColors.gold;
+    default:                      return AppColors.lavender;
   }
+}
 }
 
 // ── Slots de horário disponíveis (07 – 21h) ───────────────────────

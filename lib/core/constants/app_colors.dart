@@ -31,19 +31,27 @@ class AppColors {
   static const Color textDim       = Color(0xFF5A4A6A);
 
   // ── Procedimentos (cores por tipo) ─────────
-  static const Color cilios        = Color(0xFFB47FD4); // Lavanda
-  static const Color sobrancelha   = Color(0xFFE8527A); // Rose
-  static const Color depilacao     = Color(0xFFF0C060); // Gold
-  static const Color designCompleto= Color(0xFF4ECBA0); // Green
+  static const Color cilios              = Color(0xFFB47FD4); // Lavanda
+  static const Color ciliosTufinho       = Color(0xFF9B6FD4); // Lavanda escuro
+  static const Color sobrancelhaHenna    = Color(0xFF4ECBA0); // Green
+  static const Color sobrancelhaLamina   = Color(0xFFE8527A); // Rose
+  static const Color spaLabios           = Color(0xFFFF9898); // Rosa claro
+  static const Color depilacao           = Color(0xFF98CFFF); // Azul claro
+  static const Color limpezaPele         = Color(0xFFF0C060); // Gold
 
   /// Retorna a cor de acordo com o procedimento
   static Color forProcedure(String procedure) {
-    switch (procedure) {
-      case 'Cílios':          return cilios;
-      case 'Sobrancelha':     return sobrancelha;
-      case 'Depilação':       return depilacao;
-      case 'Design Completo': return designCompleto;
-      default:                return lavender;
+    // Suporta tanto procedimento único como string de combo ("A + B")
+    final first = procedure.split(' + ').first.trim();
+    switch (first) {
+      case 'Cílios':               return cilios;
+      case 'Cílios Tufinho':       return ciliosTufinho;
+      case 'Sobrancelha com Henna':return sobrancelhaHenna;
+      case 'Sobrancelha sem Henna':return sobrancelhaLamina;
+      case 'Spa dos Lábios':       return spaLabios;
+      case 'Depilação':            return depilacao;
+      case 'Limpeza de Pele':      return limpezaPele;
+      default:                     return lavender;
     }
   }
 }

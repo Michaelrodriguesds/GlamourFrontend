@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
 class AppBottomNav extends StatelessWidget {
-  final int            currentIndex;
+  final int               currentIndex;
   final ValueChanged<int> onTap;
 
   const AppBottomNav({
@@ -26,12 +26,33 @@ class AppBottomNav extends StatelessWidget {
         selectedItemColor:   AppColors.rose,
         unselectedItemColor: AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
+        selectedFontSize:   10,
+        unselectedFontSize: 10,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined),      activeIcon: Icon(Icons.home),           label: 'Início'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_outlined), activeIcon: Icon(Icons.calendar_month), label: 'Calendário'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), activeIcon: Icon(Icons.add_circle),     label: 'Novo'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart),      label: 'Stats'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outline),     activeIcon: Icon(Icons.people),         label: 'Clientes'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Início'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_month_outlined),
+              activeIcon: Icon(Icons.calendar_month),
+              label: 'Calendário'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle_outline),
+              activeIcon: Icon(Icons.add_circle),
+              label: 'Novo'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart),
+              label: 'Stats'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.sticky_note_2_outlined),
+              activeIcon: Icon(Icons.sticky_note_2),
+              label: 'Notas'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline),
+              activeIcon: Icon(Icons.people),
+              label: 'Clientes'),
         ],
       ),
     );
