@@ -10,31 +10,50 @@ import '../../../providers/appointments_provider.dart';
 
 // ── Catálogo de procedimentos ─────────────────────────────────────
 class _Proc {
-  static const cilios             = 'Cílios';
+  // "Cílios" simples removido — mantido apenas Cílios Tufinho
+  static const ciliosTufinho      = 'Cílios Tufinho';
   static const sobrancelhaHenna   = 'Sobrancelha com Henna';
   static const sobrancelhaLamina  = 'Sobrancelha sem Henna';
   static const spaLabios          = 'Spa dos Lábios';
   static const depilacao          = 'Depilação';
-  static const designCompleto     = 'Designer Completo';
+  static const limpezaPele        = 'Limpeza de Pele';
 
-  // Todos os individuais (sem o "completo")
   static const all = [
-    cilios,
+    ciliosTufinho,
     sobrancelhaHenna,
     sobrancelhaLamina,
     spaLabios,
     depilacao,
+    limpezaPele,
   ];
 
   static const icons = {
-    cilios:            '👁️',
+    ciliosTufinho:     '✨',
     sobrancelhaHenna:  '🌿',
     sobrancelhaLamina: '✏️',
     spaLabios:         '💋',
     depilacao:         '🪵',
-    designCompleto:    '✨',
+    limpezaPele:       '🧴',
   };
+
+  static Color colorOf(String proc) {
+    switch (proc) {
+      case ciliosTufinho:     return AppColors.ciliosTufinho;
+      case sobrancelhaHenna:  return AppColors.green;
+      case sobrancelhaLamina: return AppColors.rose;
+      case spaLabios:         return const Color(0xFFFF9898);
+      case depilacao:         return const Color(0xFF98CFFF);
+      case limpezaPele:       return AppColors.gold;
+      default:                return AppColors.lavender;
+    }
+  }
 }
+
+// ── Slots de horário disponíveis (07 – 21h) ───────────────────────
+const _timeSlots = [
+  '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
+  '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00',
+];
 
 // ─────────────────────────────────────────────────────────────────
 
@@ -49,14 +68,13 @@ class AppointmentFormScreen extends ConsumerStatefulWidget {
 
 class _AppointmentFormScreenState
     extends ConsumerState<AppointmentFormScreen> {
-  final _formKey  = GlobalKey<FormState>();
+  final _formKey   = GlobalKey<FormState>();
   final _nameCtrl  = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
 
   // ── Estado do formulário ─────────────────
-  Set<String> _selectedProcs = {};   // procedimentos selecionados
-  bool        _designCompleto = false;
+  Set<String> _selectedProcs = {};
   String      _location       = 'Studio Manilha';
   String      _payMethod      = '';
   DateTime    _date           = DateTime.now();
@@ -67,8 +85,8 @@ class _AppointmentFormScreenState
   bool        _isEditing      = false;
   String?     _editId;
 
-  static const _locations     = ['Studio Manilha', 'Studio Guaxindiba'];
-  static const _payMethods    = ['A combinar', 'PIX', 'Cartão', 'Dinheiro'];
+  static const _locations  = ['Studio Manilha', 'Studio Guaxindiba'];
+  static const _payMethods = ['A combinar', 'PIX', 'Cartão', 'Dinheiro'];
 
   @override
   void initState() {
@@ -88,36 +106,20 @@ class _AppointmentFormScreenState
     super.dispose();
   }
 
-  // ── Lógica de seleção de procedimentos ───
+  // ── Seleção de procedimentos ─────────────
 
   void _toggleProc(String proc) {
     setState(() {
-      if (proc == _Proc.designCompleto) {
-        // "Designer Completo" seleciona/deseleciona todos
-        if (_designCompleto) {
-          _designCompleto = false;
-          _selectedProcs  = {};
-        } else {
-          _designCompleto = true;
-          _selectedProcs  = Set.from(_Proc.all);
-        }
+      if (_selectedProcs.contains(proc)) {
+        _selectedProcs = Set.from(_selectedProcs)..remove(proc);
       } else {
-        _designCompleto = false;
-        if (_selectedProcs.contains(proc)) {
-          _selectedProcs = Set.from(_selectedProcs)..remove(proc);
-        } else {
-          _selectedProcs = Set.from(_selectedProcs)..add(proc);
-        }
-        // Se todos individuais estão marcados → ativa "completo"
-        if (_selectedProcs.containsAll(_Proc.all)) {
-          _designCompleto = true;
-        }
+        _selectedProcs = Set.from(_selectedProcs)..add(proc);
       }
     });
   }
 
-  List<String> get _proceduresList =>
-      _designCompleto ? List.from(_Proc.all) : List.from(_selectedProcs);
+  List<String> get _proceduresList => List.from(_selectedProcs);
+  bool get _isCombo => _selectedProcs.length > 1;
 
   // ── Carrega para edição ──────────────────
 
@@ -136,16 +138,18 @@ class _AppointmentFormScreenState
         _paid           = apt.paid;
         _confirmed      = apt.confirmed;
         _loading        = false;
-
-        // Restaura procedimentos selecionados
-        _selectedProcs  = Set.from(apt.procedures);
-        _designCompleto = _selectedProcs.containsAll(_Proc.all);
+        // Filtra procedimentos legados que não existem mais no catálogo
+        _selectedProcs  = Set.from(
+          apt.procedures.where((p) => _Proc.all.contains(p)),
+        );
       });
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao carregar: $e'), backgroundColor: AppColors.rose),
+          SnackBar(
+              content: Text('Erro ao carregar: $e'),
+              backgroundColor: AppColors.rose),
         );
       }
     }
@@ -192,7 +196,9 @@ class _AppointmentFormScreenState
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(_isEditing ? '✅ Agendamento atualizado!' : '✅ Agendamento criado!'),
+          content: Text(_isEditing
+              ? '✅ Agendamento atualizado!'
+              : '✅ Agendamento criado!'),
           backgroundColor: AppColors.green,
         ));
       }
@@ -265,24 +271,24 @@ class _AppointmentFormScreenState
                   // ── Nome da cliente ────────
                   _Label('👤 Nome da cliente'),
                   TextFormField(
-                    controller:          _nameCtrl,
-                    style:               const TextStyle(color: AppColors.text),
-                    decoration:          const InputDecoration(hintText: 'Amanda Silva'),
-                    validator:           Validators.clientName,
-                    textCapitalization:  TextCapitalization.words,
+                    controller:         _nameCtrl,
+                    style:              const TextStyle(color: AppColors.text),
+                    decoration:         const InputDecoration(hintText: 'Amanda Silva'),
+                    validator:          Validators.clientName,
+                    textCapitalization: TextCapitalization.words,
                   ),
                   const SizedBox(height: 18),
 
-                  // ── Procedimentos (multi-select) ────
+                  // ── Procedimentos ──────────
                   _Label('✨ Procedimentos'),
                   _ProcedureSelector(
-                    selected:        _selectedProcs,
-                    designCompleto:  _designCompleto,
-                    onToggle:        _toggleProc,
+                    selected: _selectedProcs,
+                    onToggle: _toggleProc,
                   ),
                   if (_proceduresList.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    _ProcedureSummary(procedures: _proceduresList),
+                    _ProcedureSummary(
+                        procedures: _proceduresList, isCombo: _isCombo),
                   ],
                   const SizedBox(height: 18),
 
@@ -304,7 +310,8 @@ class _AppointmentFormScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _Label('⏰ Horário'),
-                            _TimeField(
+                            // ← NOVO: scroll wheel 24h sem AM/PM
+                            _TimeWheelField(
                                 time: _time,
                                 onChanged: (t) => setState(() => _time = t)),
                           ]),
@@ -323,7 +330,9 @@ class _AppointmentFormScreenState
                   const SizedBox(height: 18),
 
                   // ── Valor ──────────────────
-                  _Label('💰 Valor (R\$)'),
+                  _Label(_isCombo
+                      ? '💰 Valor Total do Combo (R\$)'
+                      : '💰 Valor (R\$)'),
                   TextFormField(
                     controller:   _priceCtrl,
                     style:        const TextStyle(color: AppColors.text),
@@ -379,8 +388,8 @@ class _AppointmentFormScreenState
                     child: _loading
                         ? const SizedBox(
                             height: 20,
-                            width:  20,
-                            child:  CircularProgressIndicator(
+                            width: 20,
+                            child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2))
                         : Text(_isEditing
                             ? 'SALVAR ALTERAÇÕES 🌸'
@@ -394,18 +403,216 @@ class _AppointmentFormScreenState
   }
 }
 
+// ── Time picker — Scroll Wheel 24h (sem AM/PM) ───────────────────
+//
+// Abre um BottomSheet com roda de seleção nos slots 07:00 – 21:00.
+// Sem necessidade de digitar ou escolher AM/PM.
+
+class _TimeWheelField extends StatelessWidget {
+  final String               time;
+  final ValueChanged<String> onChanged;
+  const _TimeWheelField({required this.time, required this.onChanged});
+
+  Future<void> _open(BuildContext context) async {
+    final currentIndex =
+        _timeSlots.indexOf(time).clamp(0, _timeSlots.length - 1);
+
+    await showModalBottomSheet(
+      context:            context,
+      backgroundColor:    AppColors.card,
+      isScrollControlled: true,   // ← permite expandir além de 50% da tela
+      useSafeArea:        true,   // ← respeita notch/barra de navegação
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => _TimeWheelPicker(
+        initialIndex: currentIndex,
+        onSelected:   onChanged,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: () => _open(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            color:        AppColors.card,
+            borderRadius: BorderRadius.circular(12),
+            border:       Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(children: [
+            const Icon(Icons.schedule_outlined,
+                color: AppColors.rose, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              time,
+              style: const TextStyle(
+                  color:      AppColors.text,
+                  fontSize:   16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1),
+            ),
+            const Spacer(),
+            const Icon(Icons.expand_more,
+                color: AppColors.textMuted, size: 18),
+          ]),
+        ),
+      );
+}
+
+// Grade de chips clicáveis — funciona perfeitamente em web e mobile
+class _TimeWheelPicker extends StatefulWidget {
+  final int                  initialIndex;
+  final ValueChanged<String> onSelected;
+  const _TimeWheelPicker(
+      {required this.initialIndex, required this.onSelected});
+
+  @override
+  State<_TimeWheelPicker> createState() => _TimeWheelPickerState();
+}
+
+class _TimeWheelPickerState extends State<_TimeWheelPicker> {
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
+
+  void _confirm() {
+    widget.onSelected(_timeSlots[_selectedIndex]);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = _timeSlots[_selectedIndex];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+
+        // ── Handle ─────────────────────────────
+        Container(
+          width: 40, height: 4,
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+              color: AppColors.textDim,
+              borderRadius: BorderRadius.circular(2)),
+        ),
+
+        // ── Header ─────────────────────────────
+        Row(children: [
+          const Icon(Icons.schedule_outlined, color: AppColors.rose, size: 18),
+          const SizedBox(width: 8),
+          const Text('Selecionar Horário',
+              style: TextStyle(
+                  color: AppColors.text,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700)),
+          const Spacer(),
+          // Horário selecionado em destaque
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color:        AppColors.rose.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+              border:       Border.all(color: AppColors.rose.withValues(alpha: 0.4)),
+            ),
+            child: Text(selected,
+                style: const TextStyle(
+                    color:      AppColors.rose,
+                    fontSize:   15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1)),
+          ),
+        ]),
+        const SizedBox(height: 16),
+
+        // ── Grade de horários (3 colunas) ──────
+        // Cada chip é clicável diretamente — sem scroll wheel
+        Wrap(
+          spacing:   8,
+          runSpacing: 8,
+          children: List.generate(_timeSlots.length, (i) {
+            final isSel = i == _selectedIndex;
+            return GestureDetector(
+              onTap: () => setState(() => _selectedIndex = i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width:   80,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSel
+                      ? AppColors.rose
+                      : AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSel
+                        ? AppColors.rose
+                        : AppColors.cardBorder,
+                    width: isSel ? 0 : 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    _timeSlots[i],
+                    style: TextStyle(
+                      color: isSel
+                          ? Colors.white
+                          : AppColors.textMuted,
+                      fontSize:   14,
+                      fontWeight: isSel
+                          ? FontWeight.w800
+                          : FontWeight.w400,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 20),
+
+        // ── Botão confirmar ────────────────────
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _confirm,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.rose,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            child: Text(
+              'Confirmar  $selected',
+              style: const TextStyle(
+                  color:      Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize:   15,
+                  letterSpacing: 0.5),
+            ),
+          ),
+        ),
+      ]),
+      ), // SingleChildScrollView
+    );
+  }
+}
+
 // ── Seletor de procedimentos ─────────────────────────────────────
 
 class _ProcedureSelector extends StatelessWidget {
-  final Set<String>           selected;
-  final bool                  designCompleto;
-  final ValueChanged<String>  onToggle;
+  final Set<String>          selected;
+  final ValueChanged<String> onToggle;
 
-  const _ProcedureSelector({
-    required this.selected,
-    required this.designCompleto,
-    required this.onToggle,
-  });
+  const _ProcedureSelector(
+      {required this.selected, required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -416,68 +623,36 @@ class _ProcedureSelector extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border:       Border.all(color: AppColors.cardBorder),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Procedimentos individuais
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _Proc.all.map((proc) {
-              final isSelected = selected.contains(proc);
-              final icon       = _Proc.icons[proc] ?? '✨';
-              return _ProcChip(
-                label:      '$icon $proc',
-                selected:   isSelected,
-                color:      _chipColor(proc),
-                onTap:      () => onToggle(proc),
-              );
-            }).toList(),
-          ),
-
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(color: AppColors.cardBorder, height: 1),
-          ),
-
-          // Designer Completo
-          _ProcChip(
-            label:    '✨ Designer Completo',
-            selected: designCompleto,
-            color:    AppColors.gold,
-            onTap:    () => onToggle(_Proc.designCompleto),
-            fullWidth: true,
-          ),
-        ],
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: _Proc.all.map((proc) {
+          final isSelected = selected.contains(proc);
+          final icon       = _Proc.icons[proc] ?? '✨';
+          final color      = _Proc.colorOf(proc);
+          return _ProcChip(
+            label:    '$icon $proc',
+            selected: isSelected,
+            color:    color,
+            onTap:    () => onToggle(proc),
+          );
+        }).toList(),
       ),
     );
-  }
-
-  Color _chipColor(String proc) {
-    switch (proc) {
-      case _Proc.cilios:            return AppColors.lavender;
-      case _Proc.sobrancelhaHenna:  return AppColors.green;
-      case _Proc.sobrancelhaLamina: return AppColors.rose;
-      case _Proc.spaLabios:         return const Color(0xFFFF9898);
-      case _Proc.depilacao:         return const Color(0xFF98CFFF);
-      default:                      return AppColors.gold;
-    }
   }
 }
 
 class _ProcChip extends StatelessWidget {
-  final String  label;
-  final bool    selected;
-  final Color   color;
+  final String       label;
+  final bool         selected;
+  final Color        color;
   final VoidCallback onTap;
-  final bool    fullWidth;
 
   const _ProcChip({
     required this.label,
     required this.selected,
     required this.color,
     required this.onTap,
-    this.fullWidth = false,
   });
 
   @override
@@ -486,10 +661,9 @@ class _ProcChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        width:   fullWidth ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color:        selected
+          color: selected
               ? color.withValues(alpha: 0.18)
               : AppColors.cardBorder.withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(12),
@@ -499,21 +673,18 @@ class _ProcChip extends StatelessWidget {
           ),
         ),
         child: Row(
-          mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
-          mainAxisAlignment: fullWidth
-              ? MainAxisAlignment.center
-              : MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             if (selected)
               Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Icon(Icons.check_circle, color: color, size: 14),
+                padding: const EdgeInsets.only(right: 5),
+                child: Icon(Icons.check_circle, color: color, size: 13),
               ),
             Text(
               label,
               style: TextStyle(
                 color:      selected ? color : AppColors.textMuted,
-                fontSize:   13,
+                fontSize:   12,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
@@ -524,30 +695,48 @@ class _ProcChip extends StatelessWidget {
   }
 }
 
-// Resumo dos procedimentos selecionados
 class _ProcedureSummary extends StatelessWidget {
   final List<String> procedures;
-  const _ProcedureSummary({required this.procedures});
+  final bool         isCombo;
+  const _ProcedureSummary({required this.procedures, required this.isCombo});
 
   @override
   Widget build(BuildContext context) {
+    final color = isCombo ? AppColors.gold : AppColors.rose;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color:        AppColors.rose.withValues(alpha: 0.08),
+        color:        color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border:       Border.all(color: AppColors.rose.withValues(alpha: 0.3)),
+        border:       Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_outline,
-              color: AppColors.rose, size: 14),
+          Icon(
+            isCombo ? Icons.auto_awesome : Icons.check_circle_outline,
+            color: color,
+            size: 14,
+          ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              procedures.join(' + '),
-              style: const TextStyle(
-                  color: AppColors.rose, fontSize: 12, fontWeight: FontWeight.w500),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isCombo)
+                  Text('COMBO',
+                      style: TextStyle(
+                          color:      color,
+                          fontSize:   9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5)),
+                Text(
+                  procedures.join(' + '),
+                  style: TextStyle(
+                      color:      color,
+                      fontSize:   11,
+                      fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
           ),
         ],
@@ -556,7 +745,7 @@ class _ProcedureSummary extends StatelessWidget {
   }
 }
 
-// ── Widgets auxiliares do formulário ─────────────────────────────
+// ── Widgets auxiliares ───────────────────────────────────────────
 
 class _Label extends StatelessWidget {
   final String text;
@@ -600,13 +789,15 @@ class _DropdownField<T> extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               borderSide:   const BorderSide(color: AppColors.rose, width: 1.5)),
         ),
-        items:     items.map((i) => DropdownMenuItem(value: i, child: Text(display(i)))).toList(),
+        items: items
+            .map((i) => DropdownMenuItem(value: i, child: Text(display(i))))
+            .toList(),
         onChanged: onChanged,
       );
 }
 
 class _DateField extends StatelessWidget {
-  final DateTime           date;
+  final DateTime               date;
   final ValueChanged<DateTime> onChanged;
   const _DateField({required this.date, required this.onChanged});
 
@@ -645,60 +836,17 @@ class _DateField extends StatelessWidget {
       );
 }
 
-class _TimeField extends StatelessWidget {
-  final String             time;
-  final ValueChanged<String> onChanged;
-  const _TimeField({required this.time, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: () async {
-          final parts  = time.split(':');
-          final picked = await showTimePicker(
-            context:     context,
-            initialTime: TimeOfDay(
-                hour:   int.parse(parts[0]),
-                minute: int.parse(parts[1])),
-            builder: (ctx, child) => Theme(
-              data: Theme.of(ctx).copyWith(
-                  colorScheme: const ColorScheme.dark(
-                      primary: AppColors.rose, surface: AppColors.card)),
-              child: child!,
-            ),
-          );
-          if (picked != null) {
-            onChanged(
-                '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}');
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          decoration: BoxDecoration(
-            color:        AppColors.card,
-            borderRadius: BorderRadius.circular(12),
-            border:       Border.all(color: AppColors.cardBorder),
-          ),
-          child: Row(children: [
-            const Icon(Icons.access_time_outlined,
-                color: AppColors.textMuted, size: 16),
-            const SizedBox(width: 8),
-            Text(time,
-                style: const TextStyle(color: AppColors.text, fontSize: 13)),
-          ]),
-        ),
-      );
-}
-
 class _Toggle extends StatelessWidget {
   final String             label;
   final bool               value;
   final Color              color;
   final ValueChanged<bool> onChanged;
-  const _Toggle(
-      {required this.label,
-      required this.value,
-      required this.color,
-      required this.onChanged});
+  const _Toggle({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
@@ -714,8 +862,8 @@ class _Toggle extends StatelessWidget {
             Text(label,
                 style: const TextStyle(color: AppColors.text, fontSize: 13)),
             Switch(
-                value:          value,
-                onChanged:      onChanged,
+                value:            value,
+                onChanged:        onChanged,
                 activeThumbColor: color),
           ],
         ),

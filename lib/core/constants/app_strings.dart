@@ -8,24 +8,28 @@ class AppStrings {
 
   // ── Procedimentos ──────────────────────────
   static const List<String> procedures = [
-    'Cílios',
-    'Sobrancelha',
+    'Cílios Tufinho',          // ← "Cílios" simples removido
+    'Sobrancelha com Henna',
+    'Sobrancelha sem Henna',
+    'Spa dos Lábios',
     'Depilação',
-    'Design Completo',
+    'Limpeza de Pele',
   ];
 
   // ── Ícones por procedimento ────────────────
   static const Map<String, String> procedureIcons = {
-    'Cílios':           '👁️',
-    'Sobrancelha':      '🌙',
-    'Depilação':        '✨',
-    'Design Completo':  '💎',
+    'Cílios Tufinho':       '✨',
+    'Sobrancelha com Henna':'🌿',
+    'Sobrancelha sem Henna':'✏️',
+    'Spa dos Lábios':       '💋',
+    'Depilação':            '🪵',
+    'Limpeza de Pele':      '🧴',
   };
 
-   // ── Locais de atendimento ──────────────────
+  // ── Locais de atendimento ──────────────────
   static const List<String> locations = [
-    'Studio Manilha',    
-    'Studio Guaxindiba', 
+    'Studio Manilha',
+    'Studio Guaxindiba',
   ];
 
   // ── Formas de pagamento ────────────────────
@@ -36,11 +40,20 @@ class AppStrings {
     'A combinar',
   ];
 
+  // ── Tags de anotações ─────────────────────
+  static const Map<String, String> noteTags = {
+    'lembrete':   '🔔 Lembrete',
+    'financeiro': '💰 Financeiro',
+    'estoque':    '📦 Estoque',
+    'geral':      '📝 Geral',
+  };
+
   // ── Navegação ──────────────────────────────
   static const String navHome       = 'Início';
   static const String navCalendar   = 'Calendário';
   static const String navNew        = 'Novo';
   static const String navStats      = 'Stats';
+  static const String navNotes      = 'Notas';
   static const String navClients    = 'Clientes';
 
   // ── Formulário ─────────────────────────────
