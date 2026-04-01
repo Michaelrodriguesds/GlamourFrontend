@@ -4,7 +4,7 @@ class ApiEndpoints {
 
   // ── Base URL ────────────────────────────────────────────────────
   // 🌐 Produção (Render):
-  static const _base = 'https://glamourbackend-bd05.onrender.com';
+  static const _base = 'https://glamourbackend-1.onrender.com';
 
   // 💻 Desenvolvimento local (descomente para testar no PC):
    //static const _base = 'http://localhost:5000';
