@@ -50,10 +50,23 @@ class _Proc {
   }
 }
 
-// ── Slots de horário (07–21h) ─────────────────────────────────────
+// ── Slots de horário: 07:00–21:00, de 30 em 30 minutos (29 slots) ─
 const _timeSlots = [
-  '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
-  '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00',
+  '07:00', '07:30',
+  '08:00', '08:30',
+  '09:00', '09:30',
+  '10:00', '10:30',
+  '11:00', '11:30',
+  '12:00', '12:30',
+  '13:00', '13:30',
+  '14:00', '14:30',
+  '15:00', '15:30',
+  '16:00', '16:30',
+  '17:00', '17:30',
+  '18:00', '18:30',
+  '19:00', '19:30',
+  '20:00', '20:30',
+  '21:00',
 ];
 
 // ─────────────────────────────────────────────────────────────────
@@ -489,14 +502,6 @@ class _TimeWheelField extends StatelessWidget {
     if (!slot.available) return AppColors.rose;
     if (slot.occupancy > 0) return AppColors.gold;
     return AppColors.green;
-  }
-
-  String _chipLabel(String t) {
-    final slot = slotMap[t];
-    if (slot == null || slotMap.isEmpty) return t;
-    if (!slot.available) return '$t\n✗ lotado';
-    if (slot.occupancy > 0) return '$t\n${slot.occupancy}/${slot.maxCapacity}';
-    return '$t\nlivre';
   }
 
   Future<void> _open(BuildContext context) async {

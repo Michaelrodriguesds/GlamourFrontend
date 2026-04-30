@@ -19,16 +19,16 @@ class CacheService {
 
   // ── Chaves de cache ──────────────────────────────────────────────
   static String keyAppointments(int month, int year, [String? location]) =>
-      'apts_${year}_${month}${location != null ? '_${location.hashCode}' : ''}';
+      'apts_${year}_$month${location != null ? '_${location.hashCode}' : ''}';
 
   static String keyAvailabilityMonth(int month, int year, [String? location]) =>
-      'avail_month_${year}_${month}${location != null ? '_${location.hashCode}' : ''}';
+      'avail_month_${year}_$month${location != null ? '_${location.hashCode}' : ''}';
 
   static String keyAvailabilityDay(String date, [String? location]) =>
-      'avail_day_${date}${location != null ? '_${location.hashCode}' : ''}';
+      'avail_day_$date${location != null ? '_${location.hashCode}' : ''}';
 
   static String keyStats(int month, int year) =>
-      'stats_${year}_${month}';
+      'stats_${year}_$month';
 
   static String keyTrend(int year) =>
       'trend_$year';

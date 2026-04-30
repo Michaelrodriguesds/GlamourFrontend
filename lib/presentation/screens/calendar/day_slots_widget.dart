@@ -203,7 +203,7 @@ class _SlotRow extends StatelessWidget {
         child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
           // Barra lateral com degradê das 2 cores
-          Container(
+          SizedBox(
             width: 3,
             child: Column(children: [
               Expanded(child: Container(color: color1)),

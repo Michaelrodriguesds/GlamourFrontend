@@ -4,7 +4,7 @@ class ApiEndpoints {
 
   // ── Base URL ────────────────────────────────────────────────────
   static const _base = 'https://glamourbackend-1.onrender.com';
-  // static const _base = 'http://localhost:5000'; // dev local
+   //static const _base = 'http://localhost:5000'; // dev local
 
   // ── Auth ────────────────────────────────────────────────────────
   static String get login        => '$_base/api/auth/login';
