@@ -29,4 +29,7 @@ class ApiEndpoints {
   static String get notes           => '$_base/api/notes';
   static String noteById(String id) => '$_base/api/notes/$id';
   static String pinNote(String id)  => '$_base/api/notes/$id/pin';
+
+  // ── Clientes (agregado, não depende de GET /appointments sem filtro) ──
+  static String get clients => '$_base/api/clients';
 }

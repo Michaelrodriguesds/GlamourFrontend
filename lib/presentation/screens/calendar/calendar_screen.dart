@@ -33,7 +33,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       if (height >= 700 && mounted) {
         setState(() => _calendarFormat = CalendarFormat.month);
       }
-      _loadMonth();
+      // Não chama _loadMonth() aqui: o availabilityProvider já dispara
+      // o carregamento do mês atual sozinho, assim que é criado (ver
+      // construtor de AvailabilityNotifier). Chamar de novo aqui fazia
+      // o app disparar 2 requisições idênticas toda vez que a tela abria.
     });
   }
 

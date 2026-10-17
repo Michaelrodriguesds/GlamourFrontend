@@ -3,12 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/appointment_model.dart';
-import '../../../data/services/appointment_service.dart';
+import '../../../providers/appointments_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/refresh_provider.dart';
 import '../../widgets/loading_overlay.dart';
 import '../appointments/appointment_form_screen.dart';
 
+// ── Tela inicial ──────────────────────────────────────────────────
+//
+// Antes, esta tela chamava `AppointmentService()` diretamente (duas
+// vezes: "hoje" e "mês inteiro"), por fora do `appointmentsProvider` e
+// do seu cache. Isso tinha dois problemas: (1) zero cache — toda
+// abertura da tela esperava a rede do zero; (2) depois de qualquer
+// edição feita em outra tela, a Home não sabia que precisava recarregar
+// (nenhuma invalidação chegava até ela).
+//
+// Agora a Home reaproveita o `appointmentsProvider` (mesma fonte usada
+// pelo Calendário/Agendamentos): carrega o mês atual (que já cobre
+// "hoje") e deriva a lista de hoje localmente a partir dele — uma
+// chamada de rede a menos, e os mesmos dados/cache/invalidação do
+// resto do app.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -16,13 +30,22 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  List<Appointment> _today    = [];
-  List<Appointment> _monthAll = [];
-  bool _loading     = true;
   int  _lastRefresh = -1;
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    // Idempotente: se o mês atual já estiver carregado (ou carregando),
+    // não dispara uma busca nova — só garante que existe uma em curso.
+    WidgetsBinding.instance.addPostFrameCallback((_) =>
+        ref.read(appointmentsProvider.notifier).ensureMonthLoaded(now.month, now.year));
+  }
+
+  Future<void> _load() async {
+    final now = DateTime.now();
+    await ref.read(appointmentsProvider.notifier).loadMonth(now.month, now.year);
+  }
 
   bool _isPast(Appointment apt) {
     final now   = DateTime.now();
@@ -42,12 +65,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _load());
     }
 
+    final aptState = ref.watch(appointmentsProvider);
+    final loading  = aptState.loading && aptState.appointments.isEmpty;
+    final monthAll = aptState.appointments;
+    final today    = monthAll.where((a) {
+      final now = DateTime.now();
+      return a.date.year == now.year && a.date.month == now.month && a.date.day == now.day;
+    }).toList();
+
     final now      = DateTime.now();
-    final pending  = _monthAll.where((a) => !a.paid).toList();
-    final unconf   = _monthAll.where((a) => !a.confirmed).toList();
-    final received = _monthAll.where((a) => a.paid).fold<double>(0, (s, a) => s + a.price);
-    final todayPending  = _today.where((a) => !_isPast(a)).toList();
-    final todayFinished = _today.where((a) =>  _isPast(a)).toList();
+    final pending  = monthAll.where((a) => !a.paid).toList();
+    final unconf   = monthAll.where((a) => !a.confirmed).toList();
+    final received = monthAll.where((a) => a.paid).fold<double>(0, (s, a) => s + a.price);
+    final todayPending  = today.where((a) => !_isPast(a)).toList();
+    final todayFinished = today.where((a) =>  _isPast(a)).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -69,7 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: LoadingOverlay(
-        isLoading: _loading,
+        isLoading: loading,
         child: RefreshIndicator(
           color: AppColors.rose,
           onRefresh: _load,
@@ -85,13 +116,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
-                childAspectRatio: 1.45,
+                // 1.45 deixava os cards baixos demais (conteúdo estourava ~4 px
+                // na vertical em telas mais estreitas); 1.25 dá folga.
+                childAspectRatio: 1.25,
                 children: [
                   _SummaryCard(
                     icon: '📋', label: 'Agendados', color: AppColors.lavender,
-                    count: _monthAll.length,
-                    names: _monthAll.map((a) => a.clientName).toList(),
-                    onTap: () => _showList(context, '📋 Todos agendados', _monthAll, AppColors.lavender),
+                    count: monthAll.length,
+                    names: monthAll.map((a) => a.clientName).toList(),
+                    onTap: () => _showList(context, '📋 Todos agendados', monthAll, AppColors.lavender),
                   ),
                   _SummaryCard(
                     icon: '⏳', label: 'Não confirmados', color: AppColors.gold,
@@ -123,7 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ]),
               const SizedBox(height: 8),
 
-              if (todayPending.isEmpty && todayFinished.isEmpty && !_loading)
+              if (todayPending.isEmpty && todayFinished.isEmpty && !loading)
                 _EmptyToday()
               else ...[
                 ...todayPending.map((apt) => _TodayCard(
@@ -160,31 +193,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Future<void> _load() async {
-    if (!mounted) return;
-    setState(() => _loading = true);
-    final now = DateTime.now();
-    final dateStr =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    try {
-      final results = await Future.wait([
-        AppointmentService().getAll(date: dateStr),
-        AppointmentService().getAll(month: now.month, year: now.year),
-      ]);
-      if (!mounted) return;
-      // A API já filtra por data — apenas ordena por horário
-      // NÃO re-filtrar por toLocal() pois causa drift de timezone no BR
-      setState(() {
-        _today    = results[0]..sort((a, b) => a.time.compareTo(b.time));
-        _monthAll = results[1];
-        _loading  = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loading = false);
-    }
-  }
-
   void _openEdit(String id) => Navigator.push(
         context,
         MaterialPageRoute(
@@ -201,8 +209,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     if (method == null) return;
     try {
-      await AppointmentService().markAsPaid(apt.id, paymentMethod: method);
-      _load();
+      await ref.read(appointmentsProvider.notifier).markAsPaid(apt.id, paymentMethod: method);
       if (mounted) _snack('✅ Pagamento registrado!', AppColors.green);
     } catch (e) {
       if (mounted) _snack('$e', AppColors.rose);
@@ -211,8 +218,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _confirm(String id) async {
     try {
-      await AppointmentService().confirm(id);
-      _load();
+      await ref.read(appointmentsProvider.notifier).confirmAppointment(id);
       if (mounted) _snack('✅ Confirmada!', AppColors.green);
     } catch (e) {
       if (mounted) _snack('$e', AppColors.rose);
@@ -242,8 +248,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     if (ok != true) return;
     try {
-      await AppointmentService().delete(id);
-      _load();
+      await ref.read(appointmentsProvider.notifier).delete(id);
       if (mounted) _snack('🗑️ Agendamento excluído', AppColors.textMuted);
     } catch (e) {
       if (mounted) _snack('$e', AppColors.rose);

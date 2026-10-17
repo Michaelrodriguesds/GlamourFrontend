@@ -101,6 +101,9 @@ class _AppointmentFormScreenState
   // ── Disponibilidade do dia selecionado ──────────────────────────
   Map<String, TimeSlot> _slotMap  = {};
   bool                  _loadingSlots = false;
+  // Horário -> nº de agendamentos no OUTRO studio (só informativo: a regra
+  // de 2 vagas é por studio, mas a recepção precisa enxergar o dia todo).
+  Map<String, int>      _otherStudio  = {};
 
   static const _locations  = ['Studio Manilha', 'Studio Guaxindiba'];
   static const _payMethods = ['A combinar', 'PIX', 'Cartão', 'Dinheiro'];
@@ -132,18 +135,29 @@ class _AppointmentFormScreenState
     try {
       final dateStr =
           '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
-      final slots = await AvailabilityService().getDaySlots(
-        dateStr,
-        location: _location,
-      );
+      final results = await Future.wait([
+        AvailabilityService().getDaySlots(dateStr, location: _location),
+        AvailabilityService().getDaySlots(dateStr), // todos os studios
+      ]);
+      final slots = results[0];
+      final all   = results[1];
+      final own   = {for (final s in slots) s.time: s.appointments.length};
+      final other = <String, int>{};
+      for (final s in all) {
+        final n = s.appointments.length - (own[s.time] ?? 0);
+        if (n > 0) other[s.time] = n;
+      }
       if (mounted) {
         setState(() {
           _slotMap      = {for (final s in slots) s.time: s};
+          _otherStudio  = other;
           _loadingSlots = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() { _slotMap = {}; _loadingSlots = false; });
+      if (mounted) {
+        setState(() { _slotMap = {}; _otherStudio = {}; _loadingSlots = false; });
+      }
     }
   }
 
@@ -377,6 +391,7 @@ class _AppointmentFormScreenState
                             _TimeWheelField(
                               time:         _time,
                               slotMap:      _slotMap,
+                              otherStudio:  _otherStudio,
                               loadingSlots: _loadingSlots,
                               editingId:    _editId,
                               onChanged:    (t) => setState(() => _time = t),
@@ -483,6 +498,7 @@ class _AppointmentFormScreenState
 class _TimeWheelField extends StatelessWidget {
   final String               time;
   final Map<String, TimeSlot> slotMap;
+  final Map<String, int>     otherStudio;
   final bool                 loadingSlots;
   final String?              editingId;
   final ValueChanged<String> onChanged;
@@ -490,6 +506,7 @@ class _TimeWheelField extends StatelessWidget {
   const _TimeWheelField({
     required this.time,
     required this.slotMap,
+    required this.otherStudio,
     required this.loadingSlots,
     required this.onChanged,
     this.editingId,
@@ -515,6 +532,7 @@ class _TimeWheelField extends StatelessWidget {
       builder: (_) => _TimePickerSheet(
         selected:     time,
         slotMap:      slotMap,
+        otherStudio:  otherStudio,
         loading:      loadingSlots,
         editingId:    editingId,
         onSelected:   onChanged,
@@ -574,6 +592,7 @@ class _TimeWheelField extends StatelessWidget {
 class _TimePickerSheet extends StatefulWidget {
   final String               selected;
   final Map<String, TimeSlot> slotMap;
+  final Map<String, int>     otherStudio;
   final bool                 loading;
   final String?              editingId;
   final ValueChanged<String> onSelected;
@@ -581,6 +600,7 @@ class _TimePickerSheet extends StatefulWidget {
   const _TimePickerSheet({
     required this.selected,
     required this.slotMap,
+    required this.otherStudio,
     required this.loading,
     required this.onSelected,
     this.editingId,
@@ -605,19 +625,25 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
   }
 
   Color _slotColor(String t) {
-    final slot = widget.slotMap[t];
-    if (slot == null || widget.slotMap.isEmpty) return AppColors.green;
+    final slot  = widget.slotMap[t];
+    final other = widget.otherStudio[t] ?? 0;
+    // Dourado = atenção: horário já tem alguém (neste studio ou no outro).
+    if (slot == null || widget.slotMap.isEmpty) {
+      return other > 0 ? AppColors.gold : AppColors.green;
+    }
     if (!slot.available) return AppColors.rose;
-    if (slot.occupancy > 0) return AppColors.gold;
+    if (slot.occupancy > 0 || other > 0) return AppColors.gold;
     return AppColors.green;
   }
 
   String _slotSub(String t) {
-    final slot = widget.slotMap[t];
-    if (slot == null || widget.slotMap.isEmpty) return 'livre';
-    if (!slot.available) return 'lotado';
-    if (slot.occupancy > 0) return '${slot.occupancy}/${slot.maxCapacity}';
-    return 'livre';
+    final slot  = widget.slotMap[t];
+    final other = widget.otherStudio[t] ?? 0;
+    final extra = other > 0 ? ' · +$other' : '';
+    if (slot == null || widget.slotMap.isEmpty) return 'livre$extra';
+    if (!slot.available) return 'lotado$extra';
+    if (slot.occupancy > 0) return '${slot.occupancy}/${slot.maxCapacity}$extra';
+    return 'livre$extra';
   }
 
   @override
@@ -667,6 +693,14 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
             const SizedBox(width: 12),
             _Dot(AppColors.rose,   'Lotado'),
           ]),
+        if (!widget.loading && widget.otherStudio.isNotEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              '+N = agendamentos nesse horário no outro studio',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 10),
+            ),
+          ),
         const SizedBox(height: 14),
 
         // Grid de horários

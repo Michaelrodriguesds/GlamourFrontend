@@ -16,6 +16,7 @@ class AppointmentService {
     bool?   paid,
     bool?   confirmed,
     String? client,
+    bool    clientExact = false,
   }) async {
     try {
       final params = <String, dynamic>{};
@@ -26,7 +27,13 @@ class AppointmentService {
       if (procedure != null) params['procedure'] = procedure;
       if (paid      != null) params['paid']      = paid;
       if (confirmed != null) params['confirmed'] = confirmed;
-      if (client    != null) params['client']    = client;
+      if (client    != null) {
+        params['client'] = client;
+        // Busca exata (usada na tela de Clientes, que já sabe o nome
+        // completo) em vez do regex parcial do backend, para evitar
+        // misturar clientes com nomes parecidos (ex.: "Ana" x "Ana Paula").
+        if (clientExact) params['clientExact'] = 'true';
+      }
 
       final r = await _api.dio.get(
         ApiEndpoints.appointments,

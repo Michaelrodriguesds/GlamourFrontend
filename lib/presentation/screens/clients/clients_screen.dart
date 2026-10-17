@@ -3,10 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/appointment_model.dart';
+import '../../../data/models/client_summary_model.dart';
 import '../../../data/services/appointment_service.dart';
-import '../../../providers/refresh_provider.dart';
+import '../../../providers/appointments_provider.dart';
+import '../../../providers/clients_provider.dart';
 import '../appointments/appointment_form_screen.dart';
 
+// ── Tela de clientes ─────────────────────────────────────────────
+//
+// Antes, esta tela montava a lista de clientes agrupando o resultado
+// de `AppointmentService().getAll()` SEM NENHUM filtro — e esse
+// endpoint tem um limite de segurança de 500 resultados (adicionado
+// para proteger o servidor). Com mais de 500 agendamentos, clientes
+// mais antigos sumiriam da lista sem aviso nenhum.
+//
+// Agora a lista vem pronta do endpoint `GET /api/clients`, que agrega
+// TODOS os agendamentos direto no MongoDB (cresce com o número de
+// clientes distintos, não com o número de agendamentos) — nunca é
+// truncada. O detalhe de cada cliente (lista individual de
+// atendimentos) é buscado sob demanda, só quando a pessoa abre aquele
+// cliente, com um filtro exato pelo nome.
 class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
   @override
@@ -15,50 +31,25 @@ class ClientsScreen extends ConsumerStatefulWidget {
 
 class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   final _searchCtrl = TextEditingController();
-  String _query     = '';
-  List<Appointment> _all = [];
-  bool   _loading   = true;
-  String? _error;
-  int    _lastRefresh = -1;
+  String _query = '';
 
   @override
-  void initState() { super.initState(); _load(); }
-
-  @override
-  void dispose() { _searchCtrl.dispose(); super.dispose(); }
-
-  Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final list = await AppointmentService().getAll();
-      setState(() { _all = list; _loading = false; });
-    } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
-    }
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final refresh = ref.watch(refreshProvider);
-    if (refresh != _lastRefresh) {
-      _lastRefresh = refresh;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _load());
-    }
+    final clientsState = ref.watch(clientsProvider);
+    final loading = clientsState.loading && clientsState.clients.isEmpty;
 
-    // Agrupa por nome de cliente
-    final Map<String, List<Appointment>> map = {};
-    for (final apt in _all) {
-      map.putIfAbsent(apt.clientName, () => []).add(apt);
-    }
-
-    var clients = map.entries.toList();
+    var clients = clientsState.clients;
     if (_query.isNotEmpty) {
       clients = clients
-          .where((e) => e.key.toLowerCase().contains(_query.toLowerCase()))
+          .where((c) => c.clientName.toLowerCase().contains(_query.toLowerCase()))
           .toList();
     }
-    // Ordena por mais atendimentos
-    clients.sort((a, b) => b.value.length.compareTo(a.value.length));
 
     return Scaffold(
       appBar: AppBar(
@@ -71,7 +62,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_outlined, color: AppColors.textMuted),
-            onPressed: _load,
+            onPressed: () => ref.read(clientsProvider.notifier).refresh(),
           ),
         ],
       ),
@@ -97,22 +88,23 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           ),
         ),
         Expanded(
-          child: _loading
+          child: loading
               ? const Center(child: CircularProgressIndicator(color: AppColors.rose, strokeWidth: 2.5))
-              : _error != null
-                  ? _ErrorState(error: _error!, onRetry: _load)
+              : (clientsState.error != null && clientsState.clients.isEmpty)
+                  ? _ErrorState(
+                      error: clientsState.error!,
+                      onRetry: () => ref.read(clientsProvider.notifier).refresh())
                   : clients.isEmpty
                       ? _EmptyState(hasQuery: _query.isNotEmpty)
                       : RefreshIndicator(
                           color: AppColors.rose,
-                          onRefresh: _load,
+                          onRefresh: () => ref.read(clientsProvider.notifier).refresh(),
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: clients.length,
                             itemBuilder: (_, i) => _ClientCard(
-                              name: clients[i].key,
-                              apts: clients[i].value,
-                              onTap: () => _openDetail(clients[i].key, clients[i].value),
+                              summary: clients[i],
+                              onTap: () => _openDetail(clients[i]),
                             ),
                           ),
                         ),
@@ -121,78 +113,82 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
     );
   }
 
-  void _openDetail(String name, List<Appointment> apts) {
+  void _openDetail(ClientSummary summary) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.card,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => _ClientDetailSheet(
-        name: name,
-        apts: apts,
-        onPay: (id) async {
-          Navigator.pop(context);
-          final method = await showModalBottomSheet<String>(
-            context: context,
-            backgroundColor: AppColors.card,
-            shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-            builder: (_) => _PaySheet(),
-          );
-          if (method == null) return;
-          try {
-            await AppointmentService().markAsPaid(id, paymentMethod: method);
-            _load();
-            if (mounted) _snack('✅ Pagamento registrado!', AppColors.green);
-          } catch (e) { if (mounted) _snack('$e', AppColors.rose); }
-        },
-        onConfirm: (id) async {
-          Navigator.pop(context);
-          try {
-            await AppointmentService().confirm(id);
-            _load();
-            if (mounted) _snack('✅ Confirmada!', AppColors.green);
-          } catch (e) { if (mounted) _snack('$e', AppColors.rose); }
-        },
-        onEdit: (id) {
-          Navigator.pop(context);
+      builder: (sheetCtx) => _ClientDetailSheet(
+        summary: summary,
+        // As ações ficam aqui (na tela principal, que continua viva depois
+        // que o detalhe fecha) — assim `ref`, `context` e `mounted` são
+        // sempre válidos quando a ação termina.
+        onPay:     (id) { Navigator.pop(sheetCtx); _pay(id); },
+        onConfirm: (id) { Navigator.pop(sheetCtx); _confirm(id); },
+        onEdit:    (id) {
+          Navigator.pop(sheetCtx);
           Navigator.push(context,
-              MaterialPageRoute(
-                  builder: (_) => AppointmentFormScreen(appointmentId: id)))
-              .then((_) => _load());
+              MaterialPageRoute(builder: (_) => AppointmentFormScreen(appointmentId: id)));
         },
-        onDelete: (id) async {
-          Navigator.pop(context);
-          final ok = await showDialog<bool>(
-            context: context,
-            builder: (_) => AlertDialog(
-              backgroundColor: AppColors.card,
-              title: const Text('Excluir agendamento',
-                  style: TextStyle(color: AppColors.text, fontSize: 16)),
-              content: const Text('Tem certeza? Esta ação não pode ser desfeita.',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancelar',
-                        style: TextStyle(color: AppColors.textMuted))),
-                TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Excluir',
-                        style: TextStyle(color: AppColors.rose))),
-              ],
-            ),
-          );
-          if (ok != true) return;
-          try {
-            await AppointmentService().delete(id);
-            _load();
-            if (mounted) _snack('🗑️ Agendamento excluído', AppColors.textMuted);
-          } catch (e) { if (mounted) _snack('$e', AppColors.rose); }
-        },
+        onDelete:  (id) { Navigator.pop(sheetCtx); _delete(id); },
       ),
     );
+  }
+
+  Future<void> _pay(String id) async {
+    final method = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _PaySheet(),
+    );
+    if (method == null || !mounted) return;
+    try {
+      await ref.read(appointmentsProvider.notifier).markAsPaid(id, paymentMethod: method);
+      if (mounted) _snack('✅ Pagamento registrado!', AppColors.green);
+    } catch (e) {
+      if (mounted) _snack('$e', AppColors.rose);
+    }
+  }
+
+  Future<void> _confirm(String id) async {
+    try {
+      await ref.read(appointmentsProvider.notifier).confirmAppointment(id);
+      if (mounted) _snack('✅ Confirmada!', AppColors.green);
+    } catch (e) {
+      if (mounted) _snack('$e', AppColors.rose);
+    }
+  }
+
+  Future<void> _delete(String id) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('Excluir agendamento',
+            style: TextStyle(color: AppColors.text, fontSize: 16)),
+        content: const Text('Tem certeza? Esta ação não pode ser desfeita.',
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(dialogCtx, false),
+              child: const Text('Cancelar', style: TextStyle(color: AppColors.textMuted))),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogCtx, true),
+              child: const Text('Excluir', style: TextStyle(color: AppColors.rose))),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await ref.read(appointmentsProvider.notifier).delete(id);
+      if (mounted) _snack('🗑️ Agendamento excluído', AppColors.textMuted);
+    } catch (e) {
+      if (mounted) _snack('$e', AppColors.rose);
+    }
   }
 
   void _snack(String msg, Color color) => ScaffoldMessenger.of(context)
@@ -202,20 +198,18 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
 // ── Card do cliente na lista ─────────────────────────────────────
 
 class _ClientCard extends StatelessWidget {
-  final String name;
-  final List<Appointment> apts;
+  final ClientSummary summary;
   final VoidCallback onTap;
-  const _ClientCard({required this.name, required this.apts, required this.onTap});
+  const _ClientCard({required this.summary, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final total   = apts.fold<double>(0, (s, a) => s + a.price);
-    final pending = apts.where((a) => !a.paid).length;
-    final unconf  = apts.where((a) => !a.confirmed).length;
+    final name = summary.clientName;
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final sorted  = [...apts]..sort((a, b) => b.date.compareTo(a.date));
-    final last    = sorted.first;
-    final lastStr = '${last.date.day.toString().padLeft(2,'0')}/${last.date.month.toString().padLeft(2,'0')}';
+    final last = summary.lastAppointment;
+    final lastStr = last != null
+        ? '${last.day.toString().padLeft(2, '0')}/${last.month.toString().padLeft(2, '0')}'
+        : '—';
 
     return GestureDetector(
       onTap: onTap,
@@ -252,20 +246,22 @@ class _ClientCard extends StatelessWidget {
                   style: const TextStyle(
                       color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w600)),
               Text(
-                '${apts.length} atendimento${apts.length > 1 ? 's' : ''}  ·  último: $lastStr',
+                '${summary.count} atendimento${summary.count > 1 ? 's' : ''}  ·  último: $lastStr',
                 style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
               ),
-              if (pending > 0 || unconf > 0) ...[
+              if (summary.pendingCount > 0 || summary.unconfirmedCount > 0) ...[
                 const SizedBox(height: 3),
                 Wrap(spacing: 4, children: [
-                  if (pending > 0) _MiniTag('$pending pend.', AppColors.rose),
-                  if (unconf  > 0) _MiniTag('$unconf n.conf.', AppColors.gold),
+                  if (summary.pendingCount > 0)
+                    _MiniTag('${summary.pendingCount} pend.', AppColors.rose),
+                  if (summary.unconfirmedCount > 0)
+                    _MiniTag('${summary.unconfirmedCount} n.conf.', AppColors.gold),
                 ]),
               ],
             ]),
           ),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('R\$ ${total.toStringAsFixed(0)}',
+            Text('R\$ ${summary.totalRevenue.toStringAsFixed(0)}',
                 style: const TextStyle(
                     color: AppColors.gold, fontWeight: FontWeight.w700, fontSize: 14)),
             const SizedBox(height: 4),
@@ -294,19 +290,20 @@ class _MiniTag extends StatelessWidget {
   );
 }
 
-// ── Bottom sheet de detalhe completo ────────────────────────────
-
-class _ClientDetailSheet extends StatelessWidget {
-  final String name;
-  final List<Appointment> apts;
+// ── Bottom sheet de detalhe completo (busca sob demanda) ─────────
+//
+// Busca os atendimentos daquele cliente especificamente (filtro exato
+// por nome, sem o limite de 500 que existe na listagem geral) só
+// quando a pessoa abre o detalhe — não quando a lista de clientes é
+// carregada.
+class _ClientDetailSheet extends StatefulWidget {
+  final ClientSummary summary;
   final void Function(String) onPay;
   final void Function(String) onConfirm;
   final void Function(String) onEdit;
   final void Function(String) onDelete;
-
   const _ClientDetailSheet({
-    required this.name,
-    required this.apts,
+    required this.summary,
     required this.onPay,
     required this.onConfirm,
     required this.onEdit,
@@ -314,14 +311,54 @@ class _ClientDetailSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final sorted   = [...apts]..sort((a, b) => b.date.compareTo(a.date));
-    final total    = apts.fold<double>(0, (s, a) => s + a.price);
-    final received = apts.where((a) => a.paid).fold<double>(0, (s, a) => s + a.price);
+  State<_ClientDetailSheet> createState() => _ClientDetailSheetState();
+}
 
-    // Contagem por procedimento
+class _ClientDetailSheetState extends State<_ClientDetailSheet> {
+  List<Appointment> _apts = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final list = await AppointmentService()
+          .getAll(client: widget.summary.clientName, clientExact: true);
+      if (mounted) setState(() { _apts = list; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = widget.summary.clientName;
+
+    if (_loading) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator(color: AppColors.rose, strokeWidth: 2.5)),
+      );
+    }
+    if (_error != null) {
+      return SizedBox(
+        height: 200,
+        child: _ErrorState(error: _error!, onRetry: _fetch),
+      );
+    }
+
+    final sorted = [...(_apts)]..sort((a, b) => b.date.compareTo(a.date));
+    final total = _apts.fold<double>(0, (s, a) => s + a.price);
+    final received = _apts.where((a) => a.paid).fold<double>(0, (s, a) => s + a.price);
+
     final Map<String, int> procCount = {};
-    for (final a in apts) {
+    for (final a in _apts) {
       procCount[a.procedure] = (procCount[a.procedure] ?? 0) + 1;
     }
 
@@ -331,15 +368,12 @@ class _ClientDetailSheet extends StatelessWidget {
       minChildSize: 0.4,
       expand: false,
       builder: (_, ctrl) => Column(children: [
-        // Handle
         Container(
           margin: const EdgeInsets.only(top: 12, bottom: 8),
           width: 40, height: 4,
           decoration: BoxDecoration(
               color: AppColors.textDim, borderRadius: BorderRadius.circular(2)),
         ),
-
-        // Cabeçalho: avatar + nome + totais
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
           child: Row(children: [
@@ -365,7 +399,7 @@ class _ClientDetailSheet extends StatelessWidget {
                     style: const TextStyle(
                         color: AppColors.text, fontSize: 18, fontWeight: FontWeight.w700)),
                 Text(
-                  '${apts.length} atendimento${apts.length != 1 ? 's' : ''}  ·  '
+                  '${_apts.length} atendimento${_apts.length != 1 ? 's' : ''}  ·  '
                   'Total: R\$ ${total.toStringAsFixed(0)}',
                   style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                 ),
@@ -378,14 +412,12 @@ class _ClientDetailSheet extends StatelessWidget {
             ),
           ]),
         ),
-
-        // Chips de procedimentos realizados
         if (procCount.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
             child: Wrap(spacing: 6, runSpacing: 4, children: procCount.entries.map((e) {
               final color = AppColors.forProcedure(e.key);
-              final icon  = AppStrings.procedureIcons[e.key] ?? '✨';
+              final icon = AppStrings.procedureIcons[e.key] ?? '✨';
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -394,26 +426,22 @@ class _ClientDetailSheet extends StatelessWidget {
                   border: Border.all(color: color.withValues(alpha: 0.4)),
                 ),
                 child: Text('$icon ${e.key} × ${e.value}',
-                    style: TextStyle(
-                        color: color, fontSize: 10, fontWeight: FontWeight.w700)),
+                    style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700)),
               );
             }).toList()),
           ),
-
         const Divider(height: 16),
-
-        // Lista de atendimentos
         Expanded(
           child: ListView.builder(
             controller: ctrl,
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
             itemCount: sorted.length,
             itemBuilder: (_, i) {
-              final apt       = sorted[i];
+              final apt = sorted[i];
               final procColor = AppColors.forProcedure(apt.procedure);
-              final procIcon  = AppStrings.procedureIcons[apt.procedure] ?? '✨';
-              final day  = apt.date.day.toString().padLeft(2, '0');
-              final mon  = apt.date.month.toString().padLeft(2, '0');
+              final procIcon = AppStrings.procedureIcons[apt.procedure] ?? '✨';
+              final day = apt.date.day.toString().padLeft(2, '0');
+              final mon = apt.date.month.toString().padLeft(2, '0');
               final year = apt.date.year;
 
               return ClipRRect(
@@ -433,7 +461,6 @@ class _ClientDetailSheet extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Procedimento + valor
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -441,9 +468,7 @@ class _ClientDetailSheet extends StatelessWidget {
                                   child: Text(
                                     '$procIcon ${apt.procedure}',
                                     style: TextStyle(
-                                        color: procColor,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700),
+                                        color: procColor, fontSize: 13, fontWeight: FontWeight.w700),
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 2,
                                   ),
@@ -451,48 +476,36 @@ class _ClientDetailSheet extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Text('R\$ ${apt.price.toStringAsFixed(0)}',
                                     style: const TextStyle(
-                                        color: AppColors.gold,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700)),
+                                        color: AppColors.gold, fontSize: 14, fontWeight: FontWeight.w700)),
                               ],
                             ),
                             const SizedBox(height: 4),
-
-                            // Data + hora + studio
                             Row(children: [
                               const Icon(Icons.calendar_today_outlined,
                                   size: 11, color: AppColors.textMuted),
                               const SizedBox(width: 4),
                               Text('$day/$mon/$year  ·  ${apt.time}',
-                                  style: const TextStyle(
-                                      color: AppColors.textMuted, fontSize: 11)),
+                                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
                               const SizedBox(width: 8),
                               const Icon(Icons.location_on_outlined,
                                   size: 11, color: AppColors.textMuted),
                               const SizedBox(width: 2),
                               Expanded(
                                 child: Text(apt.location,
-                                    style: const TextStyle(
-                                        color: AppColors.textMuted, fontSize: 11),
+                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                                     overflow: TextOverflow.ellipsis),
                               ),
                             ]),
                             const SizedBox(height: 4),
-
-                            // Forma de pagamento
                             if (apt.paymentMethod.isNotEmpty)
                               Row(children: [
                                 const Icon(Icons.payment_outlined,
                                     size: 11, color: AppColors.textMuted),
                                 const SizedBox(width: 4),
                                 Text(apt.paymentMethod,
-                                    style: const TextStyle(
-                                        color: AppColors.textMuted, fontSize: 11)),
+                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
                               ]),
-
                             const SizedBox(height: 6),
-
-                            // Badges: pago + confirmado
                             Wrap(spacing: 6, runSpacing: 4, children: [
                               _Badge(
                                 apt.paid ? '✓ Pago' : '💰 Pendente',
@@ -503,8 +516,6 @@ class _ClientDetailSheet extends StatelessWidget {
                                 apt.confirmed ? AppColors.lavender : AppColors.gold,
                               ),
                             ]),
-
-                            // Observação
                             if (apt.notes.isNotEmpty) ...[
                               const SizedBox(height: 6),
                               Container(
@@ -515,27 +526,19 @@ class _ClientDetailSheet extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text('📝 ${apt.notes}',
-                                    style: const TextStyle(
-                                        color: AppColors.textMuted, fontSize: 11)),
+                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
                               ),
                             ],
-
                             const SizedBox(height: 8),
                             const Divider(height: 1, color: AppColors.cardBorder),
                             const SizedBox(height: 8),
-
-                            // Ações
                             Wrap(spacing: 6, runSpacing: 6, children: [
                               if (!apt.paid)
-                                _SheetAction('💰 Pagar', AppColors.green,
-                                    () => onPay(apt.id)),
+                                _SheetAction('💰 Pagar', AppColors.green, () => widget.onPay(apt.id)),
                               if (!apt.confirmed)
-                                _SheetAction('✓ Confirmar', AppColors.lavender,
-                                    () => onConfirm(apt.id)),
-                              _SheetAction('✏️ Editar', AppColors.textMuted,
-                                  () => onEdit(apt.id)),
-                              _SheetAction('🗑️ Excluir', AppColors.rose,
-                                  () => onDelete(apt.id)),
+                                _SheetAction('✓ Confirmar', AppColors.lavender, () => widget.onConfirm(apt.id)),
+                              _SheetAction('✏️ Editar', AppColors.textMuted, () => widget.onEdit(apt.id)),
+                              _SheetAction('🗑️ Excluir', AppColors.rose, () => widget.onDelete(apt.id)),
                             ]),
                           ],
                         ),
@@ -587,8 +590,7 @@ class _SheetAction extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(label,
-          style: TextStyle(
-              color: color, fontSize: 10, fontWeight: FontWeight.w700)),
+          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700)),
     ),
   );
 }

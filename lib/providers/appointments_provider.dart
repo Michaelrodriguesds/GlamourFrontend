@@ -5,6 +5,9 @@ import '../data/services/cache_service.dart';
 import '../data/services/connectivity_service.dart';
 import '../data/services/offline_queue_service.dart';
 import '../data/models/appointment_model.dart';
+import 'stats_provider.dart';
+import 'availability_provider.dart';
+import 'clients_provider.dart';
 
 // ── Filtros ativos ──────────────────────────────────────────────
 
@@ -74,16 +77,27 @@ class AppointmentsState {
     cachedAt:         cachedAt         ?? this.cachedAt,
     pendingSyncCount: pendingSyncCount ?? this.pendingSyncCount,
   );
+
+  /// Agendamentos de hoje, derivados da lista do mês já carregada —
+  /// evita uma segunda chamada de rede só para "hoje" (a HomeScreen
+  /// usava isso antes via uma requisição própria, separada e sem cache).
+  List<Appointment> todayOnly() {
+    final now = DateTime.now();
+    return appointments.where((a) =>
+        a.date.year == now.year && a.date.month == now.month && a.date.day == now.day
+    ).toList();
+  }
 }
 
 // ── Notifier ────────────────────────────────────────────────────
 
 class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
   final AppointmentService _service;
+  final Ref _ref;
   final _queue        = OfflineQueueService();
   final _connectivity = ConnectivityService();
 
-  AppointmentsNotifier(this._service) : super(const AppointmentsState()) {
+  AppointmentsNotifier(this._service, this._ref) : super(const AppointmentsState()) {
     _init();
   }
 
@@ -109,15 +123,37 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
     }
   }
 
-  // ── Carregamento com cache ─────────────────────────────────────
-
+  // ── Carregamento cache-first (stale-while-revalidate) ───────────
+  //
+  // 1) Mostra IMEDIATAMENTE o que estiver salvo em cache (se existir),
+  //    mesmo que esteja desatualizado — a tela nunca fica travada
+  //    esperando o servidor responder (principalmente durante o cold
+  //    start do plano gratuito do Render).
+  // 2) Em paralelo, busca os dados atuais no servidor. Quando chegam,
+  //    atualiza a tela e o cache silenciosamente.
+  // 3) Se a busca no servidor falhar e não havia cache, mostra erro.
   Future<void> loadMonth(int month, int year, {String? location}) async {
+    final cacheKey = CacheService.keyAppointments(month, year, location);
+
     state = state.copyWith(
       loading: true,
       filters: state.filters.copyWith(month: month, year: year, location: location),
     );
 
-    final cacheKey = CacheService.keyAppointments(month, year, location);
+    final cached = CacheService.instance.get<List>(cacheKey);
+    if (cached != null && mounted) {
+      final savedAt = CacheService.instance.savedAt(cacheKey);
+      final list    = cached
+          .map((e) => Appointment.fromJson(e as Map<String, dynamic>))
+          .toList();
+      state = state.copyWith(
+        appointments:     list,
+        loading:          true, // segue carregando: buscando versão atual por trás
+        fromCache:        true,
+        cachedAt:         savedAt,
+        pendingSyncCount: _queue.pendingCount,
+      );
+    }
 
     try {
       final list = await _service.getAll(month: month, year: year, location: location);
@@ -137,18 +173,10 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
         );
       }
     } catch (e) {
-      // Fallback: cache local
-      final cached = CacheService.instance.get<List>(cacheKey);
       if (cached != null && mounted) {
-        final savedAt = CacheService.instance.savedAt(cacheKey);
-        final list    = cached
-            .map((e) => Appointment.fromJson(e as Map<String, dynamic>))
-            .toList();
+        // já exibimos o cache acima — só avisa que não deu pra atualizar
         state = state.copyWith(
-          appointments:     list,
           loading:          false,
-          fromCache:        true,
-          cachedAt:         savedAt,
           pendingSyncCount: _queue.pendingCount,
           error:            'Sem conexão — exibindo dados salvos',
         );
@@ -162,16 +190,17 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
     }
   }
 
-  Future<void> loadToday({String? location}) async {
-    state = state.copyWith(loading: true);
-    final today  = DateTime.now();
-    final dateStr = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
-    try {
-      final list = await _service.getAll(date: dateStr, location: location);
-      if (mounted) state = state.copyWith(appointments: list, loading: false);
-    } catch (e) {
-      if (mounted) state = state.copyWith(loading: false, error: e.toString());
+  /// Garante que o mês atual esteja carregado, sem forçar um novo
+  /// fetch se os filtros já apontam para o mês pedido (usado pela
+  /// HomeScreen, que reaproveita os dados do mês já carregados aqui
+  /// em vez de fazer sua própria chamada separada).
+  Future<void> ensureMonthLoaded(int month, int year, {String? location}) async {
+    final f = state.filters;
+    if (f.month == month && f.year == year && f.location == location &&
+        (state.appointments.isNotEmpty || state.loading)) {
+      return;
     }
+    await loadMonth(month, year, location: location);
   }
 
   // ── CRIAR ─────────────────────────────────────────────────────
@@ -188,7 +217,7 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
             appointments: [...state.appointments, created],
           );
         }
-        _invalidateCache();
+        _invalidateRelatedCaches();
       } catch (e) {
         if (mounted) state = state.copyWith(error: e.toString());
         rethrow;
@@ -236,7 +265,7 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
                 .toList(),
           );
         }
-        _invalidateCache();
+        _invalidateRelatedCaches();
       } catch (e) {
         if (mounted) state = state.copyWith(error: e.toString());
         rethrow;
@@ -267,7 +296,7 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
             appointments: state.appointments.where((a) => a.id != id).toList(),
           );
         }
-        _invalidateCache();
+        _invalidateRelatedCaches();
       } catch (e) {
         if (mounted) state = state.copyWith(error: e.toString());
         rethrow;
@@ -295,7 +324,7 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
               .toList(),
         );
       }
-      _invalidateCache();
+      _invalidateRelatedCaches();
     } catch (e) {
       if (mounted) state = state.copyWith(error: e.toString());
       rethrow;
@@ -312,7 +341,7 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
               .toList(),
         );
       }
-      _invalidateCache();
+      _invalidateRelatedCaches();
     } catch (e) {
       if (mounted) state = state.copyWith(error: e.toString());
       rethrow;
@@ -339,6 +368,7 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
     _updatePendingCount();
 
     if (synced > 0) {
+      _invalidateRelatedCaches();
       // Recarrega a lista do servidor para refletir os dados reais
       final f = state.filters;
       if (f.month != null && f.year != null) {
@@ -354,17 +384,35 @@ class AppointmentsNotifier extends StateNotifier<AppointmentsState> {
 
   // ── AUXILIARES ────────────────────────────────────────────────
 
-  void _invalidateCache() {
+  /// Invalida o cache (em disco) e o estado (em memória) de TUDO que
+  /// pode ter ficado desatualizado depois de criar/editar/excluir/pagar/
+  /// confirmar um agendamento: o próprio mês de agendamentos, as
+  /// estatísticas, a disponibilidade do calendário e a lista de
+  /// clientes.
+  ///
+  /// Antes, só o cache da lista de agendamentos do mês era limpo — as
+  /// telas de Estatísticas, Calendário e Clientes podiam continuar
+  /// mostrando números antigos por até a duração do TTL do cache
+  /// (15–30 minutos), mesmo depois de uma mudança real nos dados.
+  void _invalidateRelatedCaches() {
     final f = state.filters;
     if (f.month != null && f.year != null) {
       CacheService.instance.remove(
         CacheService.keyAppointments(f.month!, f.year!, f.location),
       );
     }
+
+    // `ref.invalidate` descarta o estado atual do provider: se a tela
+    // correspondente estiver aberta/observando, ela refaz a busca na
+    // hora; se não estiver, o provider só é reconstruído (e rebuscado)
+    // na próxima vez que alguém o ler — sem gastar rede à toa agora.
+    _ref.invalidate(statsProvider);
+    _ref.invalidate(availabilityProvider);
+    _ref.invalidate(clientsProvider);
   }
 }
 
 final appointmentsProvider =
     StateNotifierProvider<AppointmentsNotifier, AppointmentsState>((ref) {
-  return AppointmentsNotifier(AppointmentService());
+  return AppointmentsNotifier(AppointmentService(), ref);
 });

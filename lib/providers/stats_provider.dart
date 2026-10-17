@@ -54,9 +54,25 @@ class StatsNotifier extends StateNotifier<StatsState> {
   Future<void> load(int month, int year) async {
     if (state.loading && state.month == month && state.year == year) return;
 
+    final cacheKey = CacheService.keyStats(month, year);
+
     state = state.copyWith(loading: true, month: month, year: year, clearError: true);
 
-    final cacheKey = CacheService.keyStats(month, year);
+    // Mostra o cache salvo imediatamente (se houver) enquanto busca a
+    // versão atual no servidor por trás (stale-while-revalidate).
+    final cachedFirst = CacheService.instance.get<Map<String, dynamic>>(cacheKey);
+    if (cachedFirst != null) {
+      try {
+        final stats   = MonthlyStats.fromJson(cachedFirst);
+        final savedAt = CacheService.instance.savedAt(cacheKey);
+        state = state.copyWith(
+          stats: stats, loading: true, // segue carregando: buscando por trás
+          fromCache: true, cachedAt: savedAt,
+        );
+      } catch (_) {
+        // cache corrompido/formato antigo — ignora e segue para a busca normal
+      }
+    }
 
     try {
       final stats = await _service.getMonthly(month, year);

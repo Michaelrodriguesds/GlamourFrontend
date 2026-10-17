@@ -60,9 +60,20 @@ class AvailabilityNotifier extends StateNotifier<AvailabilityState> {
   }
 
   Future<void> loadMonth(int month, int year, {String? location}) async {
+    final cacheKey = CacheService.keyAvailabilityMonth(month, year, location);
+
     state = state.copyWith(loading: true, month: month, year: year, locationFilter: location);
 
-    final cacheKey = CacheService.keyAvailabilityMonth(month, year, location);
+    // Mostra o cache salvo imediatamente enquanto busca a versão atual
+    // no servidor por trás (stale-while-revalidate).
+    final cachedFirst = CacheService.instance.get<List>(cacheKey);
+    if (cachedFirst != null) {
+      final days = cachedFirst.map((e) {
+        final m = e as Map<String, dynamic>;
+        return DayAvailability.fromJson(m);
+      }).toList();
+      state = state.copyWith(monthDays: days, loading: true, fromCache: true);
+    }
 
     try {
       final days = await _service.getMonthStatus(month, year, location: location);
@@ -107,9 +118,15 @@ class AvailabilityNotifier extends StateNotifier<AvailabilityState> {
 
   Future<void> loadDaySlots(int day, int month, int year, {String? location}) async {
     final date = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+    final cacheKey = CacheService.keyAvailabilityDay(date, location);
+
     state = state.copyWith(selectedDay: day, loading: true);
 
-    final cacheKey = CacheService.keyAvailabilityDay(date, location);
+    final cachedFirst = CacheService.instance.get<List>(cacheKey);
+    if (cachedFirst != null) {
+      final slots = cachedFirst.map((e) => TimeSlot.fromJson(e as Map<String, dynamic>)).toList();
+      state = state.copyWith(daySlots: slots, loading: true, fromCache: true);
+    }
 
     try {
       final slots = await _service.getDaySlots(date, location: location ?? state.locationFilter);

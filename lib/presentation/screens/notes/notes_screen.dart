@@ -15,13 +15,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   final _searchCtrl = TextEditingController();
   String _query     = '';
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(generalNoteProvider.notifier).load();
-    });
-  }
+  // Não chama .load() aqui: o generalNoteProvider já carrega sozinho,
+  // assim que é criado (ver construtor de GeneralNoteNotifier). Chamar
+  // de novo aqui duplicava a requisição toda vez que a tela abria.
 
   @override
   void dispose() {

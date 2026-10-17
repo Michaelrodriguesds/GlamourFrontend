@@ -17,25 +17,51 @@ import 'presentation/widgets/offline_banner.dart';
 import 'providers/auth_provider.dart';
 import 'providers/refresh_provider.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('pt_BR');
-
-  // ── Inicializa serviços globais ─────────────────────────────────
-  await CacheService.init();               // cache local
-  await ConnectivityService().init();      // monitoramento de internet
-
+  // `runApp` é chamado IMEDIATAMENTE — nada é esperado (`await`) antes
+  // disso. A primeira tela (splash) aparece assim que possível; a
+  // inicialização (data formatting + cache + conectividade) roda depois,
+  // dentro do próprio widget, em paralelo (Future.wait) em vez de em
+  // sequência. Isso corta o tempo até a primeira renderização sem
+  // introduzir condição de corrida: nenhuma tela que depende de
+  // CacheService/ConnectivityService é construída antes de `_ready`
+  // completar (ver _GlamourAppState.build abaixo).
   runApp(const ProviderScope(child: GlamourApp()));
 }
 
-class GlamourApp extends StatelessWidget {
+class GlamourApp extends StatefulWidget {
   const GlamourApp({super.key});
+  @override
+  State<GlamourApp> createState() => _GlamourAppState();
+}
+
+class _GlamourAppState extends State<GlamourApp> {
+  late final Future<void> _ready = _init();
+
+  Future<void> _init() => Future.wait([
+    initializeDateFormatting('pt_BR'),
+    CacheService.init(),          // cache local
+    ConnectivityService().init(), // monitoramento de internet
+  ]);
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Glamour Agenda',
     debugShowCheckedModeBanner: false,
     theme: AppTheme.dark,
-    home: const _AuthGate(),
+    home: FutureBuilder<void>(
+      future: _ready,
+      builder: (context, snapshot) {
+        // Enquanto CacheService/ConnectivityService não terminaram de
+        // inicializar, mostra só o splash — nada que dependa deles é
+        // construído ainda, então não há risco de erro de inicialização.
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _SplashScreen();
+        }
+        return const _AuthGate();
+      },
+    ),
   );
 }
 
@@ -61,13 +87,26 @@ class _MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<_MainShell> {
   int _index = 0;
 
-  static const List<Widget> _screens = [
-    HomeScreen(),
-    CalendarScreen(),
-    StatsScreen(),
-    NotesScreen(),
-    ClientsScreen(),
+  // Construtores (não instâncias prontas) — cada tela só é efetivamente
+  // criada (e, portanto, só dispara suas próprias requisições) na
+  // primeira vez que o usuário abre aquela aba. Antes, `IndexedStack`
+  // recebia as 5 telas já instanciadas de uma vez (_screens const),
+  // então Home + Calendário + Estatísticas + Notas + Clientes disparavam
+  // suas chamadas de API TODAS ao mesmo tempo, assim que o app abria —
+  // mesmo que o usuário só fosse olhar a tela inicial.
+  static const List<Widget Function()> _builders = [
+    HomeScreen.new,
+    CalendarScreen.new,
+    StatsScreen.new,
+    NotesScreen.new,
+    ClientsScreen.new,
   ];
+
+  // Quais abas já foram abertas pelo menos uma vez. Home (índice 0) já
+  // começa "visitada" pois é a tela inicial. Uma vez visitada, a tela
+  // continua viva dentro do IndexedStack (mesmo comportamento de antes:
+  // o estado de rolagem/filtros da aba é preservado ao trocar de aba).
+  final Set<int> _visited = {0};
 
   int _navToScreen(int navIndex) => navIndex > 2 ? navIndex - 1 : navIndex;
   int _screenToNav(int screenIndex) => screenIndex >= 2 ? screenIndex + 1 : screenIndex;
@@ -85,7 +124,10 @@ class _MainShellState extends ConsumerState<_MainShell> {
     }
     final screenIndex = _navToScreen(navIndex);
     if (screenIndex != _index) ref.read(refreshProvider.notifier).state++;
-    setState(() => _index = screenIndex);
+    setState(() {
+      _index = screenIndex;
+      _visited.add(screenIndex);
+    });
   }
 
   @override
@@ -95,7 +137,16 @@ class _MainShellState extends ConsumerState<_MainShell> {
         // ── Banner offline (aparece/some com animação) ──────────────
         const OfflineBanner(),
         Expanded(
-          child: IndexedStack(index: _index, children: _screens),
+          child: IndexedStack(
+            index: _index,
+            children: List.generate(
+              _builders.length,
+              // Abas ainda não visitadas renderizam um espaço vazio
+              // (sem custo, sem requisição) até o usuário realmente
+              // tocar nelas pela primeira vez.
+              (i) => _visited.contains(i) ? _builders[i]() : const SizedBox.shrink(),
+            ),
+          ),
         ),
       ],
     ),

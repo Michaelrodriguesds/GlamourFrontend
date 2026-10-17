@@ -63,8 +63,9 @@ class _SlotRow extends StatelessWidget {
       return _buildSingleSlot(slot.appointments[0]);
     }
 
-    // Slot duplo: 2 agendamentos simultâneos
-    return _buildDoubleSlot(slot.appointments[0], slot.appointments[1]);
+    // Slot com 2 ou mais agendamentos simultâneos (ex.: 2 em cada studio
+    // quando o calendário mostra "Todos" os locais). TODOS são exibidos.
+    return _buildMultiSlot(slot.appointments);
   }
 
   // ── Slot livre ──────────────────────────────────────────────────
@@ -147,8 +148,12 @@ class _SlotRow extends StatelessWidget {
             Container(width: 3, height: 56, color: color),
             Expanded(
               child: Container(
-                color: color.withValues(alpha: 0.07),
+                // `color` e `decoration` juntos no mesmo Container não são
+                // permitidos pelo Flutter ("Cannot provide both a color and
+                // a decoration") — a cor de fundo precisa ir DENTRO do
+                // BoxDecoration, junto com a borda.
                 decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.07),
                   border: Border(
                     top:    BorderSide(color: AppColors.cardBorder),
                     right:  BorderSide(color: AppColors.cardBorder),
@@ -189,29 +194,30 @@ class _SlotRow extends StatelessWidget {
     );
   }
 
-  // ── Slot duplo: 2 agendamentos simultâneos ──────────────────────
-  // Exibe o horário uma vez à esquerda e os 2 clientes empilhados à direita.
+  // ── Slot com 2 ou mais agendamentos simultâneos ─────────────────
+  // Exibe o horário uma vez à esquerda e TODOS os clientes empilhados à
+  // direita. Antes só os 2 primeiros eram desenhados: com o filtro "Todos"
+  // (2 vagas por studio = até 4 no mesmo horário), o 3º e o 4º sumiam do
+  // calendário.
 
-  Widget _buildDoubleSlot(AppointmentInfo apt1, AppointmentInfo apt2) {
-    final color1 = apt1.confirmed ? AppColors.forProcedure(apt1.procedure) : AppColors.gold;
-    final color2 = apt2.confirmed ? AppColors.forProcedure(apt2.procedure) : AppColors.gold;
+  Widget _buildMultiSlot(List<AppointmentInfo> apts) {
+    final colors = apts
+        .map((a) => a.confirmed ? AppColors.forProcedure(a.procedure) : AppColors.gold)
+        .toList();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-
-          // Barra lateral com degradê das 2 cores
+          // Barra lateral com uma faixa de cor por agendamento
           SizedBox(
             width: 3,
             child: Column(children: [
-              Expanded(child: Container(color: color1)),
-              Expanded(child: Container(color: color2)),
+              for (final c in colors) Expanded(child: Container(color: c)),
             ]),
           ),
 
-          // Conteúdo
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -223,8 +229,7 @@ class _SlotRow extends StatelessWidget {
               ),
               child: IntrinsicHeight(
                 child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-
-                  // Coluna do horário + badge "2x"
+                  // Coluna do horário + badge "N×"
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     color: AppColors.rose.withValues(alpha: 0.05),
@@ -246,9 +251,9 @@ class _SlotRow extends StatelessWidget {
                             color: AppColors.rose.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            '2×',
-                            style: TextStyle(
+                          child: Text(
+                            '${apts.length}×',
+                            style: const TextStyle(
                               color: AppColors.rose,
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
@@ -259,45 +264,26 @@ class _SlotRow extends StatelessWidget {
                     ),
                   ),
 
-                  // Separador
-                  Container(
-                    width: 1,
-                    color: AppColors.cardBorder,
-                  ),
+                  Container(width: 1, color: AppColors.cardBorder),
 
-                  // Dois agendamentos empilhados
+                  // Todos os agendamentos empilhados
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Agendamento 1
-                        GestureDetector(
-                          onTap: apt1.id.isNotEmpty
-                              ? () => onTapAppointment?.call(apt1.id)
-                              : null,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 7),
-                            color: color1.withValues(alpha: 0.06),
-                            child: _AppointmentTile(apt: apt1, color: color1),
+                        for (var i = 0; i < apts.length; i++) ...[
+                          if (i > 0) Container(height: 1, color: AppColors.cardBorder),
+                          GestureDetector(
+                            onTap: apts[i].id.isNotEmpty
+                                ? () => onTapAppointment?.call(apts[i].id)
+                                : null,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                              color: colors[i].withValues(alpha: 0.06),
+                              child: _AppointmentTile(apt: apts[i], color: colors[i]),
+                            ),
                           ),
-                        ),
-
-                        // Divisória
-                        Container(height: 1, color: AppColors.cardBorder),
-
-                        // Agendamento 2
-                        GestureDetector(
-                          onTap: apt2.id.isNotEmpty
-                              ? () => onTapAppointment?.call(apt2.id)
-                              : null,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 7),
-                            color: color2.withValues(alpha: 0.06),
-                            child: _AppointmentTile(apt: apt2, color: color2),
-                          ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -320,7 +306,8 @@ class _AppointmentTile extends StatelessWidget {
 
   String _formatName(String name) {
     if (name.isEmpty) return '—';
-    final parts = name.trim().split(' ');
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '—';
     if (parts.length == 1) return parts[0];
     return '${parts[0]} ${parts[1][0]}.';
   }

@@ -33,6 +33,9 @@ class CacheService {
   static String keyTrend(int year) =>
       'trend_$year';
 
+  static String keyClients([String? search]) =>
+      'clients_${search != null && search.isNotEmpty ? search.hashCode : 'all'}';
+
   // ── Operações ────────────────────────────────────────────────────
 
   /// Salva [data] (qualquer objeto serializável) com TTL em minutos.
@@ -86,10 +89,11 @@ class CacheService {
   /// Limpa todo o cache do app (útil ao fazer logout).
   Future<void> clear() async {
     final keys = _prefs.getKeys().where((k) =>
-        k.startsWith('apts_')  ||
-        k.startsWith('avail_') ||
-        k.startsWith('stats_') ||
-        k.startsWith('trend_'));
+        k.startsWith('apts_')    ||
+        k.startsWith('avail_')   ||
+        k.startsWith('stats_')   ||
+        k.startsWith('trend_')   ||
+        k.startsWith('clients_'));
     for (final k in keys) {
       await _prefs.remove(k);
     }
