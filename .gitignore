@@ -56,5 +56,4 @@ app.*.map.json
 
 # Symbols
 app.*.symbols
-# Saída de compilação (o Netlify gera sozinho)
 /build/
