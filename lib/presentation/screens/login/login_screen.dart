@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/max_width.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../providers/auth_provider.dart';
@@ -35,7 +36,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final state = ref.watch(authProvider);
     final loading = state.status == AuthStatus.checking;
 
-    return Scaffold(
+    return MaxWidth(
+      // PC/notebook: largura de cartão; no celular nada muda.
+      maxWidth: 460,
+      child: Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -136,6 +140,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 }

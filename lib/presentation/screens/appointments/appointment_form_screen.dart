@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/max_width.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -324,7 +325,10 @@ class _AppointmentFormScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MaxWidth(
+      // PC/notebook: largura de cartão; no celular nada muda.
+      maxWidth: 720,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Editar Agendamento' : 'Novo Agendamento'),
         actions: [
@@ -483,7 +487,7 @@ class _AppointmentFormScreenState
                 ],
               ),
             ),
-    );
+    ));
   }
 }
 

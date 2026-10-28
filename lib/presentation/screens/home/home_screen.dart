@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/greeting.dart';
 import '../../../data/models/appointment_model.dart';
 import '../../../providers/appointments_provider.dart';
 import '../../../providers/auth_provider.dart';
@@ -107,18 +108,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _HeroCard(today: now, count: todayPending.length),
+              _HeroCard(
+                today: now,
+                count: todayPending.length,
+                userName: ref.watch(userNameProvider).valueOrNull,
+              ),
               const SizedBox(height: 14),
 
-              GridView.count(
-                crossAxisCount: 2,
+              // Celular: 2 colunas (2x2). Tela larga: os 4 cards em uma
+              // linha só, mais baixos, para não ficarem enormes.
+              LayoutBuilder(builder: (context, box) => GridView.count(
+                crossAxisCount: box.maxWidth >= 700 ? 4 : 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
                 // 1.45 deixava os cards baixos demais (conteúdo estourava ~4 px
                 // na vertical em telas mais estreitas); 1.25 dá folga.
-                childAspectRatio: 1.25,
+                childAspectRatio: box.maxWidth >= 700 ? 1.4 : 1.25,
                 children: [
                   _SummaryCard(
                     icon: '📋', label: 'Agendados', color: AppColors.lavender,
@@ -145,7 +152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     names: [],
                   ),
                 ],
-              ),
+              )),
               const SizedBox(height: 20),
 
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -683,11 +690,12 @@ class _ActionBtn extends StatelessWidget {
 class _HeroCard extends StatelessWidget {
   final DateTime today;
   final int      count;
-  const _HeroCard({required this.today, required this.count});
+  final String?  userName;
+  const _HeroCard({required this.today, required this.count, this.userName});
   @override
   Widget build(BuildContext context) {
-    final h        = today.hour;
-    final greeting = h < 12 ? 'Bom dia! 🌸' : h < 18 ? 'Boa tarde! ✨' : 'Boa noite! 🌙';
+    // Ex.: "Bom dia, Maria! 🌸" (sem nome: "Bom dia! 🌸").
+    final greeting = buildGreeting(today, userName);
     final dateStr  = DateFormat("EEEE, d 'de' MMMM", 'pt_BR').format(today);
     return Container(
       padding: const EdgeInsets.all(16),

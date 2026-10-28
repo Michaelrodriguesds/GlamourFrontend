@@ -54,3 +54,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(AuthService());
 });
+
+// ── Nome para a saudação ─────────────────────
+// Recalcula quando o estado de login muda (login/logout).
+final userNameProvider = FutureProvider<String?>((ref) async {
+  final auth = ref.watch(authProvider);
+  if (auth.status != AuthStatus.authenticated) return null;
+  return AuthService().displayName();
+});

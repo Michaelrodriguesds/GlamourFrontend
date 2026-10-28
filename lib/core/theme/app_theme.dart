@@ -102,6 +102,13 @@ class AppTheme {
       elevation: 0,
     ),
 
+    // ── Painéis de baixo (bottom sheets) ──────
+    // Em tela larga (PC/notebook) o painel não estica pela tela toda:
+    // fica centralizado com no máximo 640 px. No celular nada muda.
+    bottomSheetTheme: const BottomSheetThemeData(
+      constraints: BoxConstraints(maxWidth: 640),
+    ),
+
     // ── Divider ───────────────────────────────
     dividerTheme: const DividerThemeData(
       color: AppColors.cardBorder,

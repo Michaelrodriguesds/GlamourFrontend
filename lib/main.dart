@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'core/constants/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'data/services/cache_service.dart';
 import 'data/services/connectivity_service.dart';
@@ -50,6 +51,19 @@ class _GlamourAppState extends State<GlamourApp> {
     title: 'Glamour Agenda',
     debugShowCheckedModeBanner: false,
     theme: AppTheme.dark,
+    // Em telas grandes (PC/notebook) o app não estica pela tela inteira:
+    // fica centralizado com largura máxima de 1100 px. No celular a
+    // largura é menor que isso e nada muda.
+    builder: (context, child) => ColoredBox(
+      color: AppColors.background,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: child ?? const SizedBox.shrink(),
+        ),
+      ),
+    ),
     home: FutureBuilder<void>(
       future: _ready,
       builder: (context, snapshot) {
@@ -130,30 +144,62 @@ class _MainShellState extends ConsumerState<_MainShell> {
     });
   }
 
+  // Mantém o estado das abas (rolagem, filtros) quando a janela muda
+  // entre "celular" e "tela larga": o conteúdo troca de lugar na árvore,
+  // mas com esta chave o Flutter o move em vez de recriá-lo.
+  final GlobalKey _contentKey = GlobalKey();
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Column(
-      children: [
-        // ── Banner offline (aparece/some com animação) ──────────────
-        const OfflineBanner(),
-        Expanded(
-          child: IndexedStack(
-            index: _index,
-            children: List.generate(
-              _builders.length,
-              // Abas ainda não visitadas renderizam um espaço vazio
-              // (sem custo, sem requisição) até o usuário realmente
-              // tocar nelas pela primeira vez.
-              (i) => _visited.contains(i) ? _builders[i]() : const SizedBox.shrink(),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      // Tela larga = PC/notebook (largura >= 800 e altura >= 500).
+      // Celular, mesmo deitado, continua com a barra de baixo.
+      final wide = constraints.maxWidth >= 800 && constraints.maxHeight >= 500;
+
+      final content = KeyedSubtree(
+        key: _contentKey,
+        child: Column(
+          children: [
+            // ── Banner offline (aparece/some com animação) ────────────
+            const OfflineBanner(),
+            Expanded(
+              child: IndexedStack(
+                index: _index,
+                children: List.generate(
+                  _builders.length,
+                  // Abas ainda não visitadas renderizam um espaço vazio
+                  // (sem custo, sem requisição) até o usuário realmente
+                  // tocar nelas pela primeira vez.
+                  (i) => _visited.contains(i) ? _builders[i]() : const SizedBox.shrink(),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
-      ],
-    ),
-    bottomNavigationBar: AppBottomNav(
-      currentIndex: _screenToNav(_index),
-      onTap: _onNavTap,
-    ),
+      );
+
+      if (!wide) {
+        return Scaffold(
+          body: content,
+          bottomNavigationBar: AppBottomNav(
+            currentIndex: _screenToNav(_index),
+            onTap: _onNavTap,
+          ),
+        );
+      }
+
+      return Scaffold(
+        body: Row(
+          children: [
+            AppSideNav(
+              currentIndex: _screenToNav(_index),
+              onTap: _onNavTap,
+            ),
+            Expanded(child: content),
+          ],
+        ),
+      );
+    },
   );
 }
 

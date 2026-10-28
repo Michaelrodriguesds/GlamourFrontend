@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/max_width.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -51,7 +52,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           .toList();
     }
 
-    return Scaffold(
+    return MaxWidth(
+      // PC/notebook: largura de cartão; no celular nada muda.
+      maxWidth: 860,
+      child: Scaffold(
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('GLAMOUR AGENDA',
@@ -110,7 +114,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         ),
         ),
       ]),
-    );
+    ));
   }
 
   void _openDetail(ClientSummary summary) {

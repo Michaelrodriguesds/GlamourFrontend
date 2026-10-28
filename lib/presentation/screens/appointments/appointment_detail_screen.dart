@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/max_width.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -48,7 +49,10 @@ class _AppointmentDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MaxWidth(
+      // PC/notebook: largura de cartão; no celular nada muda.
+      maxWidth: 720,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Detalhe'),
         actions: [
@@ -89,7 +93,7 @@ class _AppointmentDetailScreenState
                   onConfirm: _confirm,
                   onDelete: _delete,
                 ),
-    );
+    ));
   }
 
   Future<void> _pay() async {

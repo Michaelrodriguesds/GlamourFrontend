@@ -9,6 +9,7 @@ import '../../core/constants/api_endpoints.dart';
 ///   • Mensagens de erro em português
 class ApiService {
   static const _tokenKey = 'jwt_token';
+  static const _nameKey  = 'display_name';
 
   static final _storage = const FlutterSecureStorage(
     webOptions: WebOptions(dbName: 'glamour_agenda', publicKey: 'glamour'),
@@ -119,7 +120,27 @@ class ApiService {
   Future<void> clearToken() async {
     try {
       await _storage.delete(key: _tokenKey);
+      await _storage.delete(key: _nameKey);
     } catch (_) {}
+  }
+
+  /// Nome de exibição enviado pelo servidor no login (opcional).
+  Future<void> saveDisplayName(String? name) async {
+    try {
+      if (name == null || name.trim().isEmpty) {
+        await _storage.delete(key: _nameKey);
+      } else {
+        await _storage.write(key: _nameKey, value: name.trim());
+      }
+    } catch (_) {}
+  }
+
+  Future<String?> getDisplayName() async {
+    try {
+      return await _storage.read(key: _nameKey);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<bool> hasToken() async {

@@ -94,7 +94,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ],
       ),
-      body: Column(children: [
+      body: LayoutBuilder(builder: (context, box) {
+        // Filtro de local + calendário + legenda.
+        final calendarPart = <Widget>[
 
         // ── Filtro de local ──────────────────────
         SizedBox(
@@ -231,7 +233,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ],
           ),
         ),
+        ];
 
+        // Cabeçalho do dia + horários do dia.
+        final dayPart = <Widget>[
         // ── Cabeçalho do dia selecionado ─────────
         Container(
           width:   double.infinity,
@@ -286,7 +291,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             loading: state.loading,
           ),
         ),
-      ]),
+        ];
+
+        // PC/notebook: calendário à esquerda e horários do dia à direita.
+        if (box.maxWidth >= 900) {
+          return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            SizedBox(
+              width: 420,
+              child: SingleChildScrollView(child: Column(children: calendarPart)),
+            ),
+            Container(width: 1, color: AppColors.cardBorder),
+            Expanded(child: Column(children: dayPart)),
+          ]);
+        }
+
+        // Celular: tudo empilhado, como antes.
+        return Column(children: [...calendarPart, ...dayPart]);
+      }),
     );
   }
 
