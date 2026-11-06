@@ -43,8 +43,8 @@ class _Proc {
       case _Proc.ciliosTufinho:     return AppColors.ciliosTufinho;
       case _Proc.sobrancelhaHenna:  return AppColors.green;
       case _Proc.sobrancelhaLamina: return AppColors.rose;
-      case _Proc.spaLabios:         return const Color(0xFFFF9898);
-      case _Proc.depilacao:         return const Color(0xFF98CFFF);
+      case _Proc.spaLabios:         return AppColors.spaLabios;
+      case _Proc.depilacao:         return AppColors.depilacao;
       case _Proc.limpezaPele:       return AppColors.gold;
       default:                      return AppColors.lavender;
     }
@@ -212,7 +212,7 @@ class _AppointmentFormScreenState
 
     if (_proceduresList.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Selecione ao menos um procedimento'),
           backgroundColor: AppColors.rose,
         ),
@@ -227,11 +227,11 @@ class _AppointmentFormScreenState
         context: context,
         builder: (_) => AlertDialog(
           backgroundColor: AppColors.card,
-          title: const Text('Horário lotado',
+          title: Text('Horário lotado',
               style: TextStyle(color: AppColors.rose)),
           content: Text(
             'O horário $_time já tem ${slot.occupancy} de ${slot.maxCapacity} vagas preenchidas.\n\nDeseja tentar assim mesmo?',
-            style: const TextStyle(color: AppColors.textMuted),
+            style: TextStyle(color: AppColors.textMuted),
           ),
           actions: [
             TextButton(
@@ -239,7 +239,7 @@ class _AppointmentFormScreenState
                 child: const Text('Escolher outro')),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Tentar assim mesmo',
+              child: Text('Tentar assim mesmo',
                   style: TextStyle(color: AppColors.rose)),
             ),
           ],
@@ -295,9 +295,9 @@ class _AppointmentFormScreenState
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card,
-        title: const Text('Remover agendamento',
+        title: Text('Remover agendamento',
             style: TextStyle(color: AppColors.text)),
-        content: const Text('Tem certeza?',
+        content: Text('Tem certeza?',
             style: TextStyle(color: AppColors.textMuted)),
         actions: [
           TextButton(
@@ -305,7 +305,7 @@ class _AppointmentFormScreenState
               child: const Text('Cancelar')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remover',
+            child: Text('Remover',
                 style: TextStyle(color: AppColors.rose)),
           ),
         ],
@@ -334,13 +334,13 @@ class _AppointmentFormScreenState
         actions: [
           if (_isEditing)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.rose),
+              icon: Icon(Icons.delete_outline, color: AppColors.rose),
               onPressed: _delete,
             ),
         ],
       ),
       body: _loading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: AppColors.rose))
           : Form(
               key: _formKey,
@@ -351,7 +351,7 @@ class _AppointmentFormScreenState
                   _Label('👤 Nome da cliente'),
                   TextFormField(
                     controller:         _nameCtrl,
-                    style:              const TextStyle(color: AppColors.text),
+                    style:              TextStyle(color: AppColors.text),
                     decoration:         const InputDecoration(hintText: 'Amanda Silva'),
                     validator:          Validators.clientName,
                     textCapitalization: TextCapitalization.words,
@@ -424,7 +424,7 @@ class _AppointmentFormScreenState
                       : '💰 Valor (R\$)'),
                   TextFormField(
                     controller:   _priceCtrl,
-                    style:        const TextStyle(color: AppColors.text),
+                    style:        TextStyle(color: AppColors.text),
                     keyboardType: TextInputType.number,
                     decoration:   const InputDecoration(
                         hintText: '150', prefixText: 'R\$ '),
@@ -463,7 +463,7 @@ class _AppointmentFormScreenState
                   _Label('💬 Observações'),
                   TextFormField(
                     controller: _notesCtrl,
-                    style:      const TextStyle(color: AppColors.text),
+                    style:      TextStyle(color: AppColors.text),
                     maxLines:   3,
                     decoration: const InputDecoration(
                         hintText: 'Ex: pagar na próxima visita...'),
@@ -586,7 +586,7 @@ class _TimeWheelField extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.expand_more, color: AppColors.textMuted, size: 18),
+          Icon(Icons.expand_more, color: AppColors.textMuted, size: 18),
         ]),
       ),
     );
@@ -667,9 +667,9 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
 
         // Header
         Row(children: [
-          const Icon(Icons.schedule_outlined, color: AppColors.rose, size: 18),
+          Icon(Icons.schedule_outlined, color: AppColors.rose, size: 18),
           const SizedBox(width: 8),
-          const Text('Selecionar Horário',
+          Text('Selecionar Horário',
               style: TextStyle(color: AppColors.text, fontSize: 16,
                   fontWeight: FontWeight.w700)),
           const Spacer(),
@@ -681,7 +681,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
               border:       Border.all(color: AppColors.rose.withValues(alpha: 0.4)),
             ),
             child: Text(_sel,
-                style: const TextStyle(color: AppColors.rose, fontSize: 15,
+                style: TextStyle(color: AppColors.rose, fontSize: 15,
                     fontWeight: FontWeight.w800, letterSpacing: 1)),
           ),
         ]),
@@ -698,7 +698,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
             _Dot(AppColors.rose,   'Lotado'),
           ]),
         if (!widget.loading && widget.otherStudio.isNotEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 6),
             child: Text(
               '+N = agendamentos nesse horário no outro studio',
@@ -709,7 +709,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
 
         // Grid de horários
         widget.loading
-            ? const Padding(
+            ? Padding(
                 padding: EdgeInsets.all(24),
                 child: CircularProgressIndicator(
                     color: AppColors.rose, strokeWidth: 2))
@@ -931,7 +931,7 @@ class _Label extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(text,
-            style: const TextStyle(color: AppColors.textMuted,
+            style: TextStyle(color: AppColors.textMuted,
                 fontSize: 11, letterSpacing: 0.5)),
       );
 }
@@ -951,16 +951,16 @@ class _DropdownField<T> extends StatelessWidget {
   Widget build(BuildContext context) => DropdownButtonFormField<T>(
         initialValue: value,
         dropdownColor: AppColors.card,
-        style: const TextStyle(color: AppColors.text, fontSize: 14),
+        style: TextStyle(color: AppColors.text, fontSize: 14),
         decoration: InputDecoration(
           filled:    true,
           fillColor: AppColors.card,
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:   const BorderSide(color: AppColors.cardBorder)),
+              borderSide:   BorderSide(color: AppColors.cardBorder)),
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:   const BorderSide(color: AppColors.rose, width: 1.5)),
+              borderSide:   BorderSide(color: AppColors.rose, width: 1.5)),
         ),
         items: items
             .map((i) => DropdownMenuItem(value: i, child: Text(display(i))))
@@ -984,7 +984,7 @@ class _DateField extends StatelessWidget {
             lastDate:    DateTime(2027),
             builder:     (ctx, child) => Theme(
               data: Theme.of(ctx).copyWith(
-                  colorScheme: const ColorScheme.dark(
+                  colorScheme: ColorScheme.dark(
                       primary: AppColors.rose, surface: AppColors.card)),
               child: child!,
             ),
@@ -999,11 +999,11 @@ class _DateField extends StatelessWidget {
             border:       Border.all(color: AppColors.cardBorder),
           ),
           child: Row(children: [
-            const Icon(Icons.calendar_today_outlined,
+            Icon(Icons.calendar_today_outlined,
                 color: AppColors.textMuted, size: 16),
             const SizedBox(width: 8),
             Text(AppDateUtils.toFullDate(date),
-                style: const TextStyle(color: AppColors.text, fontSize: 13)),
+                style: TextStyle(color: AppColors.text, fontSize: 13)),
           ]),
         ),
       );
@@ -1030,7 +1030,7 @@ class _Toggle extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: AppColors.text, fontSize: 13)),
+            Text(label, style: TextStyle(color: AppColors.text, fontSize: 13)),
             Switch(
                 value:            value,
                 onChanged:        onChanged,

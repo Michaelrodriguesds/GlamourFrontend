@@ -6,23 +6,43 @@ import '../constants/app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get dark => ThemeData(
+  /// Tema do Material montado a partir da PALETA ativa (AppColors.palette).
+  /// É um `get`: cada vez que o app é redesenhado depois de trocar o
+  /// estilo, o tema é montado de novo com as cores novas.
+  static ThemeData get current {
+    final p = AppColors.palette;
+    final scheme = p.isDark
+        ? ColorScheme.dark(
+            primary:   AppColors.rose,
+            onPrimary: Colors.white,
+            secondary: AppColors.lavender,
+            surface:   AppColors.card,
+            onSurface: AppColors.text,
+            error:     AppColors.error,
+          )
+        : ColorScheme.light(
+            primary:   AppColors.rose,
+            onPrimary: Colors.white,
+            secondary: AppColors.lavender,
+            surface:   AppColors.card,
+            onSurface: AppColors.text,
+            error:     AppColors.error,
+          );
+    return _build(p.brightness, scheme);
+  }
+
+  static ThemeData _build(Brightness brightness, ColorScheme scheme) => ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
+    brightness: brightness,
 
     // ── Cores base ────────────────────────────
-    colorScheme: const ColorScheme.dark(
-      primary:    AppColors.rose,
-      secondary:  AppColors.lavender,
-      surface:    AppColors.card,
-      error:      AppColors.error,
-    ),
+    colorScheme: scheme,
 
     scaffoldBackgroundColor: AppColors.background,
 
     // ── Tipografia ────────────────────────────
     textTheme: GoogleFonts.poppinsTextTheme(
-      const TextTheme(
+      TextTheme(
         displayLarge:  TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
         headlineMedium:TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
         titleLarge:    TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
@@ -43,8 +63,11 @@ class AppTheme {
         fontSize: 18,
         fontWeight: FontWeight.w700,
       ),
-      iconTheme: const IconThemeData(color: AppColors.text),
-      systemOverlayStyle: SystemUiOverlayStyle.light,
+      iconTheme: IconThemeData(color: AppColors.text),
+      // Ícones da barra de status: claros no tema escuro, escuros no claro.
+      systemOverlayStyle: brightness == Brightness.dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
     ),
 
     // ── Cards ─────────────────────────────────
@@ -53,7 +76,7 @@ class AppTheme {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.cardBorder),
+        side: BorderSide(color: AppColors.cardBorder),
       ),
     ),
 
@@ -61,23 +84,23 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.card,
-      labelStyle: const TextStyle(color: AppColors.textMuted),
-      hintStyle: const TextStyle(color: AppColors.textDim),
+      labelStyle: TextStyle(color: AppColors.textMuted),
+      hintStyle: TextStyle(color: AppColors.textDim),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.cardBorder),
+        borderSide: BorderSide(color: AppColors.cardBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.rose, width: 1.5),
+        borderSide: BorderSide(color: AppColors.rose, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.error),
+        borderSide: BorderSide(color: AppColors.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+        borderSide: BorderSide(color: AppColors.error, width: 1.5),
       ),
     ),
 
@@ -94,7 +117,7 @@ class AppTheme {
     ),
 
     // ── BottomNav ─────────────────────────────
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: AppColors.card,
       selectedItemColor: AppColors.rose,
       unselectedItemColor: AppColors.textMuted,
@@ -110,7 +133,7 @@ class AppTheme {
     ),
 
     // ── Divider ───────────────────────────────
-    dividerTheme: const DividerThemeData(
+    dividerTheme: DividerThemeData(
       color: AppColors.cardBorder,
       thickness: 1,
     ),

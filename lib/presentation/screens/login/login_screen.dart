@@ -54,7 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Text('🌸', style: TextStyle(fontSize: 56)),
                   ),
                   const SizedBox(height: 16),
-                  const Center(
+                  Center(
                     child: Text(
                       'Glamour Agenda',
                       style: TextStyle(
@@ -64,7 +64,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
-                  const Center(
+                  Center(
                     child: Text(
                       'Agenda Estética',
                       style: TextStyle(color: AppColors.textMuted, fontSize: 13),
@@ -73,12 +73,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 40),
 
                   // ── Usuário ─────────────────
-                  const Text('Usuário', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                  Text('Usuário', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller:  _userCtrl,
-                    style: const TextStyle(color: AppColors.text),
-                    decoration:  const InputDecoration(
+                    style: TextStyle(color: AppColors.text),
+                    decoration:  InputDecoration(
                       hintText:    'glamour',
                       prefixIcon:  Icon(Icons.person_outline, color: AppColors.textMuted),
                     ),
@@ -87,15 +87,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 16),
 
                   // ── Senha ───────────────────
-                  const Text('Senha', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                  Text('Senha', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller:   _passCtrl,
                     obscureText:  _obscure,
-                    style: const TextStyle(color: AppColors.text),
+                    style: TextStyle(color: AppColors.text),
                     decoration:   InputDecoration(
                       hintText:    '••••••••',
-                      prefixIcon:  const Icon(Icons.lock_outline, color: AppColors.textMuted),
+                      prefixIcon:  Icon(Icons.lock_outline, color: AppColors.textMuted),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -119,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       child: Text(
                         state.error!,
-                        style: const TextStyle(color: AppColors.rose, fontSize: 12),
+                        style: TextStyle(color: AppColors.rose, fontSize: 12),
                       ),
                     ),
                   const SizedBox(height: 24),

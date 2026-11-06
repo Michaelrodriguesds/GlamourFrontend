@@ -63,7 +63,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('GLAMOUR AGENDA',
+          Text('GLAMOUR AGENDA',
               style: TextStyle(
                   fontSize: 10, color: AppColors.textMuted, letterSpacing: 2)),
           const Text('Calendário',
@@ -89,7 +89,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             }),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_outlined, color: AppColors.textMuted),
+            icon: Icon(Icons.refresh_outlined, color: AppColors.textMuted),
             onPressed: _loadMonth,
           ),
         ],
@@ -197,20 +197,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             titleCentered:       true,
             headerPadding: EdgeInsets.symmetric(
                 vertical: screenHeight < 700 ? 4 : 8),
-            titleTextStyle: const TextStyle(
+            titleTextStyle: TextStyle(
                 color: AppColors.text, fontWeight: FontWeight.w700, fontSize: 14),
             leftChevronIcon:
-                const Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20),
+                Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20),
             rightChevronIcon:
-                const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
             leftChevronPadding:  const EdgeInsets.all(4),
             rightChevronPadding: const EdgeInsets.all(4),
           ),
-          daysOfWeekStyle: const DaysOfWeekStyle(
+          daysOfWeekStyle: DaysOfWeekStyle(
             weekdayStyle: TextStyle(color: AppColors.textMuted, fontSize: 11),
             weekendStyle: TextStyle(color: AppColors.textDim,   fontSize: 11),
           ),
-          calendarStyle: const CalendarStyle(
+          calendarStyle: CalendarStyle(
             outsideDaysVisible: false,
             defaultTextStyle:   TextStyle(color: AppColors.textMuted),
             cellMargin:         EdgeInsets.all(2),
@@ -241,7 +241,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         Container(
           width:   double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.card,
             border: Border(
               top:    BorderSide(color: AppColors.cardBorder),
@@ -253,12 +253,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             children: [
               // Data selecionada
               Row(children: [
-                const Icon(Icons.calendar_today_outlined,
+                Icon(Icons.calendar_today_outlined,
                     color: AppColors.rose, size: 13),
                 const SizedBox(width: 6),
                 Text(
                   _formatSelectedDay(_selectedDay),
-                  style: const TextStyle(
+                  style: TextStyle(
                       color:      AppColors.text,
                       fontSize:   12,
                       fontWeight: FontWeight.w600),

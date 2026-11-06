@@ -20,7 +20,7 @@ class LoadingOverlay extends StatelessWidget {
         if (isLoading)
           Container(
             color: Colors.black.withValues(alpha: 0.4),
-            child: const Center(
+            child: Center(
               child: CircularProgressIndicator(
                 color: AppColors.rose,
                 strokeWidth: 2.5,
@@ -36,7 +36,7 @@ class LoadingOverlay extends StatelessWidget {
 class AppLoading extends StatelessWidget {
   const AppLoading({super.key});
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
     child: CircularProgressIndicator(color: AppColors.rose, strokeWidth: 2.5),
   );
 }
@@ -55,11 +55,11 @@ class AppError extends StatelessWidget {
       children: [
         const Text('😕', style: TextStyle(fontSize: 40)),
         const SizedBox(height: 12),
-        Text(message, style: const TextStyle(color: AppColors.textMuted), textAlign: TextAlign.center),
+        Text(message, style: TextStyle(color: AppColors.textMuted), textAlign: TextAlign.center),
         const SizedBox(height: 16),
         TextButton(
           onPressed: onRetry,
-          child: const Text('Tentar novamente', style: TextStyle(color: AppColors.rose)),
+          child: Text('Tentar novamente', style: TextStyle(color: AppColors.rose)),
         ),
       ],
     ),

@@ -129,13 +129,13 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card,
-        title: const Text('Remover agendamento', style: TextStyle(color: AppColors.text)),
-        content: const Text('Tem certeza?', style: TextStyle(color: AppColors.textMuted)),
+        title: Text('Remover agendamento', style: TextStyle(color: AppColors.text)),
+        content: Text('Tem certeza?', style: TextStyle(color: AppColors.textMuted)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remover', style: TextStyle(color: AppColors.rose)),
+            child: Text('Remover', style: TextStyle(color: AppColors.rose)),
           ),
         ],
       ),
@@ -157,13 +157,13 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
         actions: [
           if (_isEditing)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.rose),
+              icon: Icon(Icons.delete_outline, color: AppColors.rose),
               onPressed: _delete,
             ),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.rose))
+          ? Center(child: CircularProgressIndicator(color: AppColors.rose))
           : Form(
               key: _formKey,
               child: ListView(
@@ -173,7 +173,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                   _Label('👤 Nome da cliente'),
                   TextFormField(
                     controller: _nameCtrl,
-                    style: const TextStyle(color: AppColors.text),
+                    style: TextStyle(color: AppColors.text),
                     decoration: const InputDecoration(hintText: 'Amanda Silva'),
                     validator: Validators.clientName,
                     textCapitalization: TextCapitalization.words,
@@ -218,7 +218,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                   _Label('💰 Valor (R\$)'),
                   TextFormField(
                     controller:  _priceCtrl,
-                    style: const TextStyle(color: AppColors.text),
+                    style: TextStyle(color: AppColors.text),
                     keyboardType: TextInputType.number,
                     decoration:   const InputDecoration(hintText: '150', prefixText: 'R\$ '),
                     validator:    Validators.price,
@@ -255,7 +255,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                   _Label('💬 Observações'),
                   TextFormField(
                     controller: _notesCtrl,
-                    style: const TextStyle(color: AppColors.text),
+                    style: TextStyle(color: AppColors.text),
                     maxLines:   3,
                     decoration: const InputDecoration(hintText: 'Ex: pagar na próxima visita...'),
                     validator:  Validators.notes,
@@ -285,7 +285,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
-    child: Text(text, style: const TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 0.5)),
+    child: Text(text, style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 0.5)),
   );
 }
 
@@ -301,11 +301,11 @@ class _DropdownField<T> extends StatelessWidget {
   Widget build(BuildContext context) => DropdownButtonFormField<T>(
     initialValue: value,
     dropdownColor: AppColors.card,
-    style: const TextStyle(color: AppColors.text, fontSize: 14),
+    style: TextStyle(color: AppColors.text, fontSize: 14),
     decoration: InputDecoration(
       filled: true, fillColor: AppColors.card,
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.cardBorder)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.rose, width: 1.5)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.cardBorder)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.rose, width: 1.5)),
     ),
     items: items.map((i) => DropdownMenuItem(value: i, child: Text(display(i)))).toList(),
     onChanged: onChanged,
@@ -326,7 +326,7 @@ class _DateField extends StatelessWidget {
         firstDate: DateTime(2025),
         lastDate: DateTime(2027),
         builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.dark(primary: AppColors.rose, surface: AppColors.card)),
+          data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.dark(primary: AppColors.rose, surface: AppColors.card)),
           child: child!,
         ),
       );
@@ -339,9 +339,9 @@ class _DateField extends StatelessWidget {
         border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(children: [
-        const Icon(Icons.calendar_today_outlined, color: AppColors.textMuted, size: 16),
+        Icon(Icons.calendar_today_outlined, color: AppColors.textMuted, size: 16),
         const SizedBox(width: 8),
-        Text(AppDateUtils.toFullDate(date), style: const TextStyle(color: AppColors.text, fontSize: 13)),
+        Text(AppDateUtils.toFullDate(date), style: TextStyle(color: AppColors.text, fontSize: 13)),
       ]),
     ),
   );
@@ -360,7 +360,7 @@ class _TimeField extends StatelessWidget {
         context: context,
         initialTime: TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1])),
         builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.dark(primary: AppColors.rose, surface: AppColors.card)),
+          data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.dark(primary: AppColors.rose, surface: AppColors.card)),
           child: child!,
         ),
       );
@@ -375,9 +375,9 @@ class _TimeField extends StatelessWidget {
         border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(children: [
-        const Icon(Icons.access_time_outlined, color: AppColors.textMuted, size: 16),
+        Icon(Icons.access_time_outlined, color: AppColors.textMuted, size: 16),
         const SizedBox(width: 8),
-        Text(time, style: const TextStyle(color: AppColors.text, fontSize: 13)),
+        Text(time, style: TextStyle(color: AppColors.text, fontSize: 13)),
       ]),
     ),
   );
@@ -395,7 +395,7 @@ class _Toggle extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.cardBorder)),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: const TextStyle(color: AppColors.text, fontSize: 13)),
+      Text(label, style: TextStyle(color: AppColors.text, fontSize: 13)),
       Switch(value: value, onChanged: onChanged, activeThumbColor: color),
     ]),
   );

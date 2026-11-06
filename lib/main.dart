@@ -17,6 +17,7 @@ import 'presentation/widgets/bottom_nav.dart';
 import 'presentation/widgets/offline_banner.dart';
 import 'providers/auth_provider.dart';
 import 'providers/refresh_provider.dart';
+import 'providers/theme_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,26 +32,34 @@ void main() {
   runApp(const ProviderScope(child: GlamourApp()));
 }
 
-class GlamourApp extends StatefulWidget {
+class GlamourApp extends ConsumerStatefulWidget {
   const GlamourApp({super.key});
   @override
-  State<GlamourApp> createState() => _GlamourAppState();
+  ConsumerState<GlamourApp> createState() => _GlamourAppState();
 }
 
-class _GlamourAppState extends State<GlamourApp> {
+class _GlamourAppState extends ConsumerState<GlamourApp> {
   late final Future<void> _ready = _init();
 
   Future<void> _init() => Future.wait([
     initializeDateFormatting('pt_BR'),
     CacheService.init(),          // cache local
     ConnectivityService().init(), // monitoramento de internet
+    ref.read(themeProvider.notifier).load(), // estilo salvo no aparelho
   ]);
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
+  Widget build(BuildContext context) {
+    // "Observa" o estilo escolhido. Quando ele muda, a `key` do
+    // MaterialApp muda junto e o Flutter monta o app de novo do zero:
+    // todas as telas releem AppColors e já aparecem com as cores novas.
+    // (Efeito colateral aceitável: o app volta para a tela inicial.)
+    final palette = ref.watch(themeProvider);
+    return MaterialApp(
+    key: ValueKey(palette.id),
     title: 'Glamour Agenda',
     debugShowCheckedModeBanner: false,
-    theme: AppTheme.dark,
+    theme: AppTheme.current,
     // Em telas grandes (PC/notebook) o app não estica pela tela inteira:
     // fica centralizado com largura máxima de 1100 px. No celular a
     // largura é menor que isso e nada muda.
@@ -77,6 +86,7 @@ class _GlamourAppState extends State<GlamourApp> {
       },
     ),
   );
+  }
 }
 
 class _AuthGate extends ConsumerWidget {

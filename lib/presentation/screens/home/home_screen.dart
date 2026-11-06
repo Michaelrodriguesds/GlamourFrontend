@@ -7,6 +7,8 @@ import '../../../data/models/appointment_model.dart';
 import '../../../providers/appointments_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/refresh_provider.dart';
+import '../../../providers/theme_provider.dart';
+import '../../widgets/theme_picker_sheet.dart';
 import '../../widgets/loading_overlay.dart';
 import '../appointments/appointment_form_screen.dart';
 
@@ -58,6 +60,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return now.isAfter(DateTime(apt.date.year, apt.date.month, apt.date.day, h, m));
   }
 
+  // Abre a lista de estilos. Se a usuária escolher um, aplica e salva.
+  // O app se redesenha com as cores novas (ver main.dart).
+  Future<void> _pickTheme() async {
+    final chosen = await showThemePicker(context);
+    if (chosen == null || !mounted) return;
+    await ref.read(themeProvider.notifier).select(chosen);
+  }
+
   @override
   Widget build(BuildContext context) {
     final refresh = ref.watch(refreshProvider);
@@ -84,18 +94,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('GLAMOUR AGENDA',
+          Text('GLAMOUR AGENDA',
               style: TextStyle(fontSize: 10, color: AppColors.textMuted, letterSpacing: 2)),
           const Text('Início',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         ]),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_outlined, color: AppColors.textMuted),
+            tooltip: 'Mudar estilo do app',
+            icon: Icon(Icons.palette_outlined, color: AppColors.textMuted),
+            onPressed: _pickTheme,
+          ),
+          IconButton(
+            icon: Icon(Icons.refresh_outlined, color: AppColors.textMuted),
             onPressed: _load,
           ),
           IconButton(
-            icon: const Icon(Icons.logout_outlined, color: AppColors.textMuted),
+            icon: Icon(Icons.logout_outlined, color: AppColors.textMuted),
             onPressed: () => ref.read(authProvider.notifier).logout(),
           ),
         ],
@@ -156,10 +171,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 20),
 
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                const Text('HOJE',
+                Text('HOJE',
                     style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 2)),
                 Text('${todayPending.length} pendente(s)',
-                    style: const TextStyle(color: AppColors.textDim, fontSize: 10)),
+                    style: TextStyle(color: AppColors.textDim, fontSize: 10)),
               ]),
               const SizedBox(height: 8),
 
@@ -177,10 +192,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 if (todayFinished.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    const Text('FINALIZADOS',
+                    Text('FINALIZADOS',
                         style: TextStyle(color: AppColors.textDim, fontSize: 11, letterSpacing: 2)),
                     Text('${todayFinished.length} concluído(s)',
-                        style: const TextStyle(color: AppColors.textDim, fontSize: 10)),
+                        style: TextStyle(color: AppColors.textDim, fontSize: 10)),
                   ]),
                   const SizedBox(height: 8),
                   ...todayFinished.map((apt) => _TodayCard(
@@ -237,18 +252,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card,
-        title: const Text('Excluir agendamento',
+        title: Text('Excluir agendamento',
             style: TextStyle(color: AppColors.text, fontSize: 16)),
-        content: const Text('Tem certeza? Esta ação não pode ser desfeita.',
+        content: Text('Tem certeza? Esta ação não pode ser desfeita.',
             style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar',
+              child: Text('Cancelar',
                   style: TextStyle(color: AppColors.textMuted))),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Excluir',
+              child: Text('Excluir',
                   style: TextStyle(color: AppColors.rose))),
         ],
       ),
@@ -333,19 +348,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                           Text(apt.clientName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: AppColors.text,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13)),
                           Text(
                             '${apt.procedure} · ${apt.time} · '
                             '${apt.date.day.toString().padLeft(2, '0')}/${apt.date.month.toString().padLeft(2, '0')}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: AppColors.textMuted, fontSize: 11),
                           ),
                         ])),
                     Text('R\$ ${apt.price.toStringAsFixed(0)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppColors.gold,
                             fontWeight: FontWeight.w700,
                             fontSize: 13)),
@@ -381,7 +396,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
             child: Row(children: [
-              const Text('⏳ Aguardando confirmação',
+              Text('⏳ Aguardando confirmação',
                   style: TextStyle(
                       color: AppColors.gold,
                       fontWeight: FontWeight.w700,
@@ -395,7 +410,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     border: Border.all(
                         color: AppColors.gold.withValues(alpha: 0.4))),
                 child: Text('${apts.length}',
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.gold,
                         fontWeight: FontWeight.w700,
                         fontSize: 12)),
@@ -432,7 +447,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 apt.clientName.isNotEmpty
                                     ? apt.clientName[0].toUpperCase()
                                     : '?',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: AppColors.gold,
                                     fontWeight: FontWeight.w700))),
                       ),
@@ -442,7 +457,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                             Text(apt.clientName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: AppColors.text,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13)),
@@ -450,7 +465,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               '${apt.procedure} · ${apt.time} · '
                               '${apt.date.day.toString().padLeft(2, '0')}/${apt.date.month.toString().padLeft(2, '0')}  ·  '
                               '${apt.location.replaceAll("Studio ", "")}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: AppColors.textMuted, fontSize: 11),
                             ),
                           ])),
@@ -563,7 +578,7 @@ class _TodayCard extends StatelessWidget {
                             ),
                             Text(
                               'R\$ ${apt.price.toStringAsFixed(0)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: AppColors.gold,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700),
@@ -576,7 +591,7 @@ class _TodayCard extends StatelessWidget {
                         Text(
                           '${apt.procedure}  ·  ${apt.time}  ·  '
                           '${apt.location.replaceAll("Studio ", "")}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: AppColors.textMuted, fontSize: 11),
                         ),
                         const SizedBox(height: 6),
@@ -604,7 +619,7 @@ class _TodayCard extends StatelessWidget {
                         // Ações (só pendentes)
                         if (!isPast && (onPay != null || onConfirm != null)) ...[
                           const SizedBox(height: 8),
-                          const Divider(
+                          Divider(
                               height: 1, color: AppColors.cardBorder),
                           const SizedBox(height: 8),
                           Row(children: [
@@ -709,22 +724,22 @@ class _HeroCard extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(dateStr,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
         const SizedBox(height: 4),
         Text(greeting,
-            style: const TextStyle(
+            style: TextStyle(
                 color: AppColors.text,
                 fontSize: 22,
                 fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
         RichText(
           text: TextSpan(
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
             children: [
               const TextSpan(text: 'Você tem '),
               TextSpan(
                   text: '$count atendimento${count != 1 ? 's' : ''}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppColors.rose, fontWeight: FontWeight.w700)),
               TextSpan(text: ' pendente${count != 1 ? 's' : ''} hoje'),
             ],
@@ -785,7 +800,7 @@ class _SummaryCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     fontSize: 20)),
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.textMuted, fontSize: 10)),
             if (names.isNotEmpty) ...[
               const SizedBox(height: 2),
@@ -815,7 +830,7 @@ class _EmptyToday extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Text('🌟', style: TextStyle(fontSize: 36)),
         const SizedBox(height: 8),
-        const Text('Nenhum atendimento hoje!',
+        Text('Nenhum atendimento hoje!',
             style: TextStyle(
                 color: AppColors.green, fontWeight: FontWeight.w600)),
       ]),
@@ -828,14 +843,14 @@ class _PaySheet extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.all(20),
     child: Column(mainAxisSize: MainAxisSize.min, children: [
-      const Text('Forma de pagamento',
+      Text('Forma de pagamento',
           style: TextStyle(
               color: AppColors.text,
               fontWeight: FontWeight.w700,
               fontSize: 16)),
       const SizedBox(height: 12),
       ...['PIX', 'Cartão', 'Dinheiro'].map((m) => ListTile(
-            title: Text(m, style: const TextStyle(color: AppColors.text)),
+            title: Text(m, style: TextStyle(color: AppColors.text)),
             onTap: () => Navigator.pop(context, m),
           )),
     ]),

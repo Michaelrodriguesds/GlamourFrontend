@@ -30,7 +30,7 @@ class OfflineBanner extends ConsumerWidget {
                 Icon(Icons.wifi_off_rounded,
                     color: AppColors.gold, size: 14),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'Sem internet — exibindo dados salvos',
                   style: TextStyle(
                     color:    AppColors.gold,

@@ -23,7 +23,7 @@ class DaySlotsWidget extends StatelessWidget {
     return Column(children: [
       Expanded(
         child: loading
-            ? const Center(
+            ? Center(
                 child: CircularProgressIndicator(
                     color: AppColors.rose, strokeWidth: 2))
             : slots.isEmpty
@@ -93,7 +93,7 @@ class _SlotRow extends StatelessWidget {
                   constraints: const BoxConstraints(minWidth: 38, maxWidth: 48),
                   child: Text(
                     slot.time,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.green,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -105,7 +105,7 @@ class _SlotRow extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 10),
                   color: AppColors.green.withValues(alpha: 0.25),
                 ),
-                const Text(
+                Text(
                   'Livre',
                   style: TextStyle(
                     color: AppColors.green,
@@ -238,7 +238,7 @@ class _SlotRow extends StatelessWidget {
                       children: [
                         Text(
                           slot.time,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.rose,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -253,7 +253,7 @@ class _SlotRow extends StatelessWidget {
                           ),
                           child: Text(
                             '${apts.length}×',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.rose,
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
@@ -353,7 +353,7 @@ class _AppointmentTile extends StatelessWidget {
           '${AppStrings.procedureIcons[apt.procedure] ?? '✨'}'
           ' ${apt.procedure}  ·  '
           '${apt.location?.replaceAll('Studio ', '') ?? ''}',
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 10),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

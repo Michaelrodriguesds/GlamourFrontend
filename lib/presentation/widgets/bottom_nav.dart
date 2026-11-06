@@ -14,7 +14,7 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.card,
         border: Border(top: BorderSide(color: AppColors.cardBorder)),
       ),
@@ -74,7 +74,7 @@ class AppSideNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.card,
         border: Border(right: BorderSide(color: AppColors.cardBorder)),
       ),
@@ -84,12 +84,12 @@ class AppSideNav extends StatelessWidget {
         backgroundColor: Colors.transparent,
         labelType: NavigationRailLabelType.all,
         indicatorColor: AppColors.rose.withValues(alpha: 0.15),
-        selectedIconTheme:   const IconThemeData(color: AppColors.rose),
-        unselectedIconTheme: const IconThemeData(color: AppColors.textMuted),
+        selectedIconTheme:   IconThemeData(color: AppColors.rose),
+        unselectedIconTheme: IconThemeData(color: AppColors.textMuted),
         selectedLabelTextStyle:
-            const TextStyle(color: AppColors.rose, fontSize: 11, fontWeight: FontWeight.w600),
+            TextStyle(color: AppColors.rose, fontSize: 11, fontWeight: FontWeight.w600),
         unselectedLabelTextStyle:
-            const TextStyle(color: AppColors.textMuted, fontSize: 11),
+            TextStyle(color: AppColors.textMuted, fontSize: 11),
         destinations: const [
           NavigationRailDestination(
               icon: Icon(Icons.home_outlined),

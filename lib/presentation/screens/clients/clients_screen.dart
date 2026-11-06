@@ -6,6 +6,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../data/models/appointment_model.dart';
 import '../../../data/models/client_summary_model.dart';
 import '../../../data/services/appointment_service.dart';
+import '../../../data/services/marketing_service.dart';
 import '../../../providers/appointments_provider.dart';
 import '../../../providers/clients_provider.dart';
 import '../appointments/appointment_form_screen.dart';
@@ -58,14 +59,14 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       child: Scaffold(
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('GLAMOUR AGENDA',
+          Text('GLAMOUR AGENDA',
               style: TextStyle(fontSize: 10, color: AppColors.textMuted, letterSpacing: 2)),
           Text('Clientes · ${clients.length}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         ]),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_outlined, color: AppColors.textMuted),
+            icon: Icon(Icons.refresh_outlined, color: AppColors.textMuted),
             onPressed: () => ref.read(clientsProvider.notifier).refresh(),
           ),
         ],
@@ -75,13 +76,13 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           padding: const EdgeInsets.all(16),
           child: TextField(
             controller: _searchCtrl,
-            style: const TextStyle(color: AppColors.text),
+            style: TextStyle(color: AppColors.text),
             decoration: InputDecoration(
               hintText: '🔍 Buscar cliente...',
-              prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+              prefixIcon: Icon(Icons.search, color: AppColors.textMuted),
               suffixIcon: _query.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, color: AppColors.textMuted),
+                      icon: Icon(Icons.clear, color: AppColors.textMuted),
                       onPressed: () {
                         _searchCtrl.clear();
                         setState(() => _query = '');
@@ -93,7 +94,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
         ),
         Expanded(
           child: loading
-              ? const Center(child: CircularProgressIndicator(color: AppColors.rose, strokeWidth: 2.5))
+              ? Center(child: CircularProgressIndicator(color: AppColors.rose, strokeWidth: 2.5))
               : (clientsState.error != null && clientsState.clients.isEmpty)
                   ? _ErrorState(
                       error: clientsState.error!,
@@ -172,17 +173,17 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: AppColors.card,
-        title: const Text('Excluir agendamento',
+        title: Text('Excluir agendamento',
             style: TextStyle(color: AppColors.text, fontSize: 16)),
-        content: const Text('Tem certeza? Esta ação não pode ser desfeita.',
+        content: Text('Tem certeza? Esta ação não pode ser desfeita.',
             style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(dialogCtx, false),
-              child: const Text('Cancelar', style: TextStyle(color: AppColors.textMuted))),
+              child: Text('Cancelar', style: TextStyle(color: AppColors.textMuted))),
           TextButton(
               onPressed: () => Navigator.pop(dialogCtx, true),
-              child: const Text('Excluir', style: TextStyle(color: AppColors.rose))),
+              child: Text('Excluir', style: TextStyle(color: AppColors.rose))),
         ],
       ),
     );
@@ -239,7 +240,7 @@ class _ClientCard extends StatelessWidget {
             ),
             child: Center(
               child: Text(initial,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppColors.rose, fontWeight: FontWeight.w700, fontSize: 18)),
             ),
           ),
@@ -247,11 +248,11 @@ class _ClientCard extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(name,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w600)),
               Text(
                 '${summary.count} atendimento${summary.count > 1 ? 's' : ''}  ·  último: $lastStr',
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 11),
               ),
               if (summary.pendingCount > 0 || summary.unconfirmedCount > 0) ...[
                 const SizedBox(height: 3),
@@ -266,10 +267,10 @@ class _ClientCard extends StatelessWidget {
           ),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text('R\$ ${summary.totalRevenue.toStringAsFixed(0)}',
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.gold, fontWeight: FontWeight.w700, fontSize: 14)),
             const SizedBox(height: 4),
-            const Icon(Icons.chevron_right, color: AppColors.textDim, size: 16),
+            Icon(Icons.chevron_right, color: AppColors.textDim, size: 16),
           ]),
         ]),
       ),
@@ -345,7 +346,7 @@ class _ClientDetailSheetState extends State<_ClientDetailSheet> {
     final name = widget.summary.clientName;
 
     if (_loading) {
-      return const SizedBox(
+      return SizedBox(
         height: 200,
         child: Center(child: CircularProgressIndicator(color: AppColors.rose, strokeWidth: 2.5)),
       );
@@ -392,7 +393,7 @@ class _ClientDetailSheetState extends State<_ClientDetailSheet> {
               ),
               child: Center(
                 child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.rose, fontWeight: FontWeight.w700, fontSize: 22)),
               ),
             ),
@@ -400,17 +401,17 @@ class _ClientDetailSheetState extends State<_ClientDetailSheet> {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(name,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.text, fontSize: 18, fontWeight: FontWeight.w700)),
                 Text(
                   '${_apts.length} atendimento${_apts.length != 1 ? 's' : ''}  ·  '
                   'Total: R\$ ${total.toStringAsFixed(0)}',
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11),
                 ),
                 Text(
                   'Recebido: R\$ ${received.toStringAsFixed(0)}  ·  '
                   'Pendente: R\$ ${(total - received).toStringAsFixed(0)}',
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11),
                 ),
               ]),
             ),
@@ -434,6 +435,8 @@ class _ClientDetailSheetState extends State<_ClientDetailSheet> {
               );
             }).toList()),
           ),
+        // Caixinhas de lembrete (aba Estatísticas › Clientes & Marketing)
+        _ReminderPrefs(clientName: name),
         const Divider(height: 16),
         Expanded(
           child: ListView.builder(
@@ -479,35 +482,35 @@ class _ClientDetailSheetState extends State<_ClientDetailSheet> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text('R\$ ${apt.price.toStringAsFixed(0)}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         color: AppColors.gold, fontSize: 14, fontWeight: FontWeight.w700)),
                               ],
                             ),
                             const SizedBox(height: 4),
                             Row(children: [
-                              const Icon(Icons.calendar_today_outlined,
+                              Icon(Icons.calendar_today_outlined,
                                   size: 11, color: AppColors.textMuted),
                               const SizedBox(width: 4),
                               Text('$day/$mon/$year  ·  ${apt.time}',
-                                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                                  style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
                               const SizedBox(width: 8),
-                              const Icon(Icons.location_on_outlined,
+                              Icon(Icons.location_on_outlined,
                                   size: 11, color: AppColors.textMuted),
                               const SizedBox(width: 2),
                               Expanded(
                                 child: Text(apt.location,
-                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                    style: TextStyle(color: AppColors.textMuted, fontSize: 11),
                                     overflow: TextOverflow.ellipsis),
                               ),
                             ]),
                             const SizedBox(height: 4),
                             if (apt.paymentMethod.isNotEmpty)
                               Row(children: [
-                                const Icon(Icons.payment_outlined,
+                                Icon(Icons.payment_outlined,
                                     size: 11, color: AppColors.textMuted),
                                 const SizedBox(width: 4),
                                 Text(apt.paymentMethod,
-                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                                    style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
                               ]),
                             const SizedBox(height: 6),
                             Wrap(spacing: 6, runSpacing: 4, children: [
@@ -530,11 +533,11 @@ class _ClientDetailSheetState extends State<_ClientDetailSheet> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text('📝 ${apt.notes}',
-                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                                    style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
                               ),
                             ],
                             const SizedBox(height: 8),
-                            const Divider(height: 1, color: AppColors.cardBorder),
+                            Divider(height: 1, color: AppColors.cardBorder),
                             const SizedBox(height: 8),
                             Wrap(spacing: 6, runSpacing: 6, children: [
                               if (!apt.paid)
@@ -609,11 +612,11 @@ class _ErrorState extends StatelessWidget {
       const Text('😕', style: TextStyle(fontSize: 36)),
       const SizedBox(height: 8),
       Text(error,
-          style: const TextStyle(color: AppColors.textMuted),
+          style: TextStyle(color: AppColors.textMuted),
           textAlign: TextAlign.center),
       TextButton(
           onPressed: onRetry,
-          child: const Text('Tentar novamente',
+          child: Text('Tentar novamente',
               style: TextStyle(color: AppColors.rose))),
     ]),
   );
@@ -629,7 +632,7 @@ class _EmptyState extends StatelessWidget {
       const SizedBox(height: 8),
       Text(
         hasQuery ? 'Nenhuma cliente encontrada' : 'Nenhum agendamento ainda',
-        style: const TextStyle(color: AppColors.textMuted),
+        style: TextStyle(color: AppColors.textMuted),
       ),
     ]),
   );
@@ -640,14 +643,132 @@ class _PaySheet extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.all(20),
     child: Column(mainAxisSize: MainAxisSize.min, children: [
-      const Text('Forma de pagamento',
+      Text('Forma de pagamento',
           style: TextStyle(
               color: AppColors.text, fontWeight: FontWeight.w700, fontSize: 16)),
       const SizedBox(height: 12),
       ...['PIX', 'Cartão', 'Dinheiro'].map((m) => ListTile(
-            title: Text(m, style: const TextStyle(color: AppColors.text)),
+            title: Text(m, style: TextStyle(color: AppColors.text)),
             onTap: () => Navigator.pop(context, m),
           )),
     ]),
   );
+}
+
+// ── Lembretes da cliente ─────────────────────────────────────────────
+// Liga/desliga os lembretes da aba "Clientes & Marketing". Desmarcada,
+// a cliente some da lista "Para enviar hoje". Padrão: as duas marcadas.
+class _ReminderPrefs extends StatefulWidget {
+  final String clientName;
+  const _ReminderPrefs({required this.clientName});
+
+  @override
+  State<_ReminderPrefs> createState() => _ReminderPrefsState();
+}
+
+class _ReminderPrefsState extends State<_ReminderPrefs> {
+  final _service = MarketingService();
+  bool _appointment = true;
+  bool _return = true;
+  bool _loading = true;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final p = await _service.getPrefs(widget.clientName);
+      if (!mounted) return;
+      setState(() {
+        _appointment = p.remindAppointment;
+        _return = p.remindReturn;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = '$e';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _save({bool? appointment, bool? returns}) async {
+    final prevAppointment = _appointment;
+    final prevReturn = _return;
+    setState(() {
+      if (appointment != null) _appointment = appointment;
+      if (returns != null) _return = returns;
+      _saving = true;
+    });
+    try {
+      await _service.updatePrefs(widget.clientName,
+          remindAppointment: appointment, remindReturn: returns);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _appointment = prevAppointment;
+          _return = prevReturn;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e'), backgroundColor: AppColors.rose),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Widget _row(String label, String hint, bool value, ValueChanged<bool> onChanged) => Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: TextStyle(color: AppColors.text, fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(hint, style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+          ]),
+        ),
+        Switch(
+          value: value,
+          onChanged: (_loading || _saving) ? null : onChanged,
+          activeThumbColor: AppColors.rose,
+        ),
+      ]);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: _error != null
+            ? Row(children: [
+                Expanded(
+                  child: Text('Não foi possível carregar os lembretes desta cliente.',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                ),
+                TextButton(onPressed: _load, child: const Text('Tentar de novo')),
+              ])
+            : Column(children: [
+                _row('Recebe lembrete do agendamento', 'Aparece na véspera, em “Para enviar hoje”',
+                    _appointment, (v) => _save(appointment: v)),
+                const SizedBox(height: 4),
+                _row('Recebe lembrete de retorno', 'Aparece quando chega a hora de refazer',
+                    _return, (v) => _save(returns: v)),
+              ]),
+      ),
+    );
+  }
 }

@@ -50,7 +50,7 @@ class AppointmentCard extends StatelessWidget {
                 children: [
                   Text(
                     apt.clientName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.text,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
@@ -58,7 +58,7 @@ class AppointmentCard extends StatelessWidget {
                   ),
                   Text(
                     'R\$ ${apt.price.toStringAsFixed(0)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.gold,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,

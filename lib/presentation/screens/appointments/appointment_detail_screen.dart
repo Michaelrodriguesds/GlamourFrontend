@@ -58,7 +58,7 @@ class _AppointmentDetailScreenState
         actions: [
           if (_apt != null)
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppColors.textMuted),
+              icon: Icon(Icons.edit_outlined, color: AppColors.textMuted),
               onPressed: () async {
                 await Navigator.push(
                   context,
@@ -74,14 +74,14 @@ class _AppointmentDetailScreenState
         ],
       ),
       body: _loading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
                 color: AppColors.rose,
                 strokeWidth: 2.5,
               ),
             )
           : _apt == null
-              ? const Center(
+              ? Center(
                   child: Text(
                     'Agendamento não encontrado',
                     style: TextStyle(color: AppColors.textMuted),
@@ -134,11 +134,11 @@ class _AppointmentDetailScreenState
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card,
-        title: const Text(
+        title: Text(
           'Remover agendamento',
           style: TextStyle(color: AppColors.text),
         ),
-        content: const Text(
+        content: Text(
           'Tem certeza? Esta ação não pode ser desfeita.',
           style: TextStyle(color: AppColors.textMuted),
         ),
@@ -149,7 +149,7 @@ class _AppointmentDetailScreenState
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
+            child: Text(
               'Remover',
               style: TextStyle(color: AppColors.rose),
             ),
@@ -228,7 +228,7 @@ class _Body extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'R\$ ${apt.price.toStringAsFixed(0)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.gold,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -239,7 +239,7 @@ class _Body extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 apt.clientName,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.text,
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -250,7 +250,7 @@ class _Body extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '${AppDateUtils.toFullDate(apt.date)} às ${apt.time}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 13,
                 ),
@@ -258,7 +258,7 @@ class _Body extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '📍 ${apt.location}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 12,
                 ),
@@ -301,7 +301,7 @@ class _Body extends StatelessWidget {
             title: 'OBSERVAÇÕES',
             child: Text(
               apt.notes,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 13,
                 fontStyle: FontStyle.italic,
@@ -367,7 +367,7 @@ class _Section extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textDim,
               fontSize: 10,
               letterSpacing: 1.5,
@@ -425,7 +425,7 @@ class _PaymentSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
+          Text(
             'Forma de pagamento',
             style: TextStyle(
               color: AppColors.text,
@@ -436,7 +436,7 @@ class _PaymentSheet extends StatelessWidget {
           const SizedBox(height: 12),
           ...['PIX', 'Cartão', 'Dinheiro'].map(
             (m) => ListTile(
-              title: Text(m, style: const TextStyle(color: AppColors.text)),
+              title: Text(m, style: TextStyle(color: AppColors.text)),
               onTap: () => Navigator.pop(context, m),
             ),
           ),

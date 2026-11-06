@@ -19,6 +19,13 @@ Minha esposa gerenciava os agendamentos do estúdio dela de forma manual — cad
 - 💅 **Múltiplos procedimentos** — combina cílios + sobrancelha + outros em um só atendimento
 - ✅ **Confirmar e pagar** — registra presença e forma de pagamento (PIX, cartão, dinheiro)
 - 📊 **Estatísticas mensais** — receita, procedimentos mais realizados, top clientes e formas de pagamento
+- 💕 **Clientes & Marketing** — lembretes prontos para o WhatsApp, dia mais fraco da semana, clientes fiéis, sumidas e novas
+- 🎨 **Estilos do app** — 6 temas (Rosé, Lavanda, Oceano, Esmeralda, Champanhe e Claro)
+- 💻 **PC e celular** — layout próprio para tela larga, com menu lateral
+- 👋 **Saudação com nome** — "Bom dia, Mirian!" conforme o horário
+
+> 📜 Histórico completo de atualizações: [docs/HISTORICO.md](./docs/HISTORICO.md) ·
+> Guias: [Clientes & Marketing](./docs/MARKETING.md) · [Estilos (temas)](./docs/TEMAS.md)
 
 ---
 

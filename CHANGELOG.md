@@ -1,5 +1,27 @@
 # Changelog — Glamour Agenda Frontend
 
+## Novembro/2026 — Estilos do app (temas)
+
+- Botão de paleta no Início abre 6 estilos: Rosé (original), Lavanda, Oceano, Esmeralda,
+  Champanhe e Claro. Troca na hora e fica salvo no aparelho.
+- `AppColors` passou a ler a paleta ativa (`app_palette.dart`); `AppTheme.current` monta o
+  tema do Material (claro/escuro). Novo `theme_provider.dart` e `theme_picker_sheet.dart`.
+- 269 `const` removidos onde prendiam cor (script com analisador + conferência).
+- Testes: `test/theme_test.dart` (estilos, contraste, salvamento). Guia: `docs/TEMAS.md`.
+
+## Outubro/2026 — Aba "Clientes & Marketing" e layout para PC
+
+- Estatísticas ganhou abas internas: **Financeiro** (tela de sempre) e **Clientes & Marketing**
+  (nova, carrega só na 1ª visita): Para enviar hoje (amanhã + hora de refazer, com
+  "Copiar mensagem" e "Enviei"), Movimento da semana, Suas clientes (fiéis, sumidas, novas)
+  e Campanha sugerida.
+- Ficha da cliente (aba Clientes): chaves "Recebe lembrete do agendamento" e "de retorno".
+- Novos arquivos: `marketing_tab.dart`, `marketing_model.dart`, `marketing_service.dart`,
+  `marketing_messages.dart` (textos), `test/marketing_test.dart`.
+- Layout para PC/notebook: largura máxima, menu lateral, calendário lado a lado, cartões
+  com largura limitada (`max_width.dart`). Saudação com nome (`greeting.dart`).
+- Guia completo: `docs/MARKETING.md`.
+
 ## Versão atual — Mudanças aplicadas
 
 ### Novas funcionalidades
