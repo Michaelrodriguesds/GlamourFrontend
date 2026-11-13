@@ -6,12 +6,12 @@ import '../constants/app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  /// Tema do Material montado a partir da PALETA ativa (AppColors.palette).
-  /// É um `get`: cada vez que o app é redesenhado depois de trocar o
-  /// estilo, o tema é montado de novo com as cores novas.
-  static ThemeData get current {
+  /// Esquema de cores do Material montado a partir da PALETA ativa:
+  /// escuro nos estilos escuros, claro no estilo Claro. É `get`: muda junto
+  /// com o estilo escolhido.
+  static ColorScheme get scheme {
     final p = AppColors.palette;
-    final scheme = p.isDark
+    return p.isDark
         ? ColorScheme.dark(
             primary:   AppColors.rose,
             onPrimary: Colors.white,
@@ -28,8 +28,23 @@ class AppTheme {
             onSurface: AppColors.text,
             error:     AppColors.error,
           );
-    return _build(p.brightness, scheme);
   }
+
+  /// Tema do Material montado a partir da PALETA ativa (AppColors.palette).
+  /// É um `get`: cada vez que o app é redesenhado depois de trocar o
+  /// estilo, o tema é montado de novo com as cores novas.
+  static ThemeData get current => _build(AppColors.palette.brightness, scheme);
+
+  /// Use no `builder:` do showDatePicker / showTimePicker.
+  ///
+  /// Antes cada tela forçava `ColorScheme.dark(...)` (o app só tinha fundo
+  /// escuro): números brancos. No estilo Claro o fundo do seletor é branco,
+  /// então os números sumiam e só aparecia o dia marcado. Agora o seletor
+  /// usa o esquema do estilo ATIVO.
+  static Widget pickerBuilder(BuildContext context, Widget? child) => Theme(
+        data: Theme.of(context).copyWith(colorScheme: scheme),
+        child: child ?? const SizedBox.shrink(),
+      );
 
   static ThemeData _build(Brightness brightness, ColorScheme scheme) => ThemeData(
     useMaterial3: true,

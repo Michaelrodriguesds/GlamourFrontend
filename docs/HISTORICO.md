@@ -10,12 +10,33 @@ A versão anterior a todas estas mudanças está guardada na tag Git
 
 | Data | Versão | O que mudou | Onde |
 | --- | --- | --- | --- |
+| 09/11/2026 | v4.1 | Correção: calendário branco no estilo Claro | Frontend |
 | 06/11/2026 | v4 | Estilos do app (6 temas) | Frontend |
 | 30/10/2026 | v3 | Aba Clientes & Marketing | Frontend + Backend |
 | 28/10/2026 | v2 | Layout para PC/notebook e saudação com nome | Frontend + Backend |
 | 17/10/2026 | v1 | Desempenho, correções de bugs e testes | Frontend + Backend |
 
 ---
+
+## v4.1 — 09/11/2026 · Correção do calendário no estilo Claro
+
+**Problema:** no estilo Claro, o calendário que abre ao tocar na data (aba Agendamentos e
+formulário) ficava todo branco; só o dia marcado aparecia.
+
+**Causa:** os seletores de data e de hora forçavam um esquema de cores ESCURO fixo
+(`ColorScheme.dark`, do tempo em que o app só tinha fundo escuro): números brancos. No Claro
+o fundo do seletor é branco → branco no branco (contraste 1,0).
+
+**Correção:**
+- `lib/core/theme/app_theme.dart`: novo `AppTheme.scheme` (esquema do estilo ativo) e
+  `AppTheme.pickerBuilder` (tema dos seletores).
+- `appointments_screen.dart` (seletor de data e de hora) e `appointment_form_screen.dart`
+  (seletor de data) passaram a usar `builder: AppTheme.pickerBuilder`.
+- Tela de abertura (`main.dart`): o título "Glamour Agenda" tinha cor clara fixa e sumia no Claro;
+  agora usa as cores do estilo.
+- Varredura no app: os demais brancos fixos são texto sobre botão colorido ou balão escuro, ok.
+- Testes (`test/theme_test.dart`): números ≥ 4,5 e dia marcado ≥ 3 nos 6 estilos; teste que
+  falha se alguma tela voltar a usar `ColorScheme.dark` fixo.
 
 ## v4 — 06/11/2026 · Estilos do app (temas)
 

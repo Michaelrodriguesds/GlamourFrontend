@@ -216,16 +216,17 @@ class _MainShellState extends ConsumerState<_MainShell> {
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
   @override
-  Widget build(BuildContext context) => const Scaffold(
+  Widget build(BuildContext context) => Scaffold(
     body: Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('🌸', style: TextStyle(fontSize: 60)),
-        SizedBox(height: 16),
+        const Text('🌸', style: TextStyle(fontSize: 60)),
+        const SizedBox(height: 16),
+        // Cores do estilo ativo (antes eram fixas e o título sumia no Claro).
         Text('Glamour Agenda',
             style: TextStyle(
-                color: Color(0xFFF5EEF8), fontSize: 24, fontWeight: FontWeight.w700)),
-        SizedBox(height: 24),
-        CircularProgressIndicator(color: Color(0xFFE8527A), strokeWidth: 2.5),
+                color: AppColors.text, fontSize: 24, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 24),
+        CircularProgressIndicator(color: AppColors.rose, strokeWidth: 2.5),
       ]),
     ),
   );

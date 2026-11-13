@@ -3,6 +3,7 @@ import '../../widgets/max_width.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/validators.dart';
 import '../../../data/models/appointment_model.dart';
@@ -982,12 +983,7 @@ class _DateField extends StatelessWidget {
             initialDate: date,
             firstDate:   DateTime(2025),
             lastDate:    DateTime(2027),
-            builder:     (ctx, child) => Theme(
-              data: Theme.of(ctx).copyWith(
-                  colorScheme: ColorScheme.dark(
-                      primary: AppColors.rose, surface: AppColors.card)),
-              child: child!,
-            ),
+            builder: AppTheme.pickerBuilder, // cores do estilo ativo (ver app_theme.dart)
           );
           if (picked != null) onChanged(picked);
         },

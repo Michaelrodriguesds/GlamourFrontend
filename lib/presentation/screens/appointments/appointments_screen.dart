@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/validators.dart';
@@ -325,10 +326,7 @@ class _DateField extends StatelessWidget {
         initialDate: date,
         firstDate: DateTime(2025),
         lastDate: DateTime(2027),
-        builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.dark(primary: AppColors.rose, surface: AppColors.card)),
-          child: child!,
-        ),
+        builder: AppTheme.pickerBuilder, // cores do estilo ativo (ver app_theme.dart)
       );
       if (picked != null) onChanged(DateTime(picked.year, picked.month, picked.day));
     },
@@ -359,10 +357,7 @@ class _TimeField extends StatelessWidget {
       final picked = await showTimePicker(
         context: context,
         initialTime: TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1])),
-        builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(colorScheme: ColorScheme.dark(primary: AppColors.rose, surface: AppColors.card)),
-          child: child!,
-        ),
+        builder: AppTheme.pickerBuilder, // cores do estilo ativo (ver app_theme.dart)
       );
       if (picked != null) {
         onChanged('${picked.hour.toString().padLeft(2,'0')}:${picked.minute.toString().padLeft(2,'0')}');

@@ -1,5 +1,8 @@
 import 'package:agenda_flutter/core/constants/app_colors.dart';
+import 'dart:io';
+
 import 'package:agenda_flutter/core/theme/app_palette.dart';
+import 'package:agenda_flutter/core/theme/app_theme.dart';
 import 'package:agenda_flutter/providers/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -75,6 +78,33 @@ void main() {
         }
       });
     }
+  });
+
+  group('seletores de data/hora seguem o estilo (bug do calendário branco)', () {
+    for (final p in AppPalette.all) {
+      test(p.name, () {
+        AppColors.apply(p);
+        final s = AppTheme.scheme;
+        // Claro = esquema claro; escuros = esquema escuro.
+        expect(s.brightness, p.brightness);
+        // Números do calendário (onSurface) legíveis no fundo do seletor (surface).
+        expect(s.surface, p.card);
+        expect(contrast(s.onSurface, s.surface), greaterThanOrEqualTo(4.5), reason: 'números');
+        // Dia marcado: cor principal no fundo e texto branco por cima.
+        expect(contrast(s.primary, s.surface), greaterThanOrEqualTo(3.0), reason: 'dia marcado');
+      });
+    }
+
+    test('nenhuma tela força esquema escuro fixo (ColorScheme.dark fora do app_theme)', () {
+      final culpados = Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart') && !f.path.endsWith('app_theme.dart'))
+          .where((f) => f.readAsStringSync().contains('ColorScheme.dark('))
+          .map((f) => f.path)
+          .toList();
+      expect(culpados, isEmpty);
+    });
   });
 
   group('ThemeController (escolha salva no aparelho)', () {

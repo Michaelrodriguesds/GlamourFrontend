@@ -1,5 +1,5 @@
-/// Modelos da aba "Clientes & Marketing" (Estatísticas).
-/// Os dados vêm de /api/marketing/* — veja docs/MARKETING.md.
+// Modelos da aba "Clientes & Marketing" (Estatísticas).
+// Os dados vêm de /api/marketing/* — veja docs/MARKETING.md.
 
 int _int(dynamic v) => v is num ? v.toInt() : 0;
 double _double(dynamic v) => v is num ? v.toDouble() : 0;
