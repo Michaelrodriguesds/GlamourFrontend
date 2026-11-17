@@ -1,11 +1,11 @@
 {
-    "name": "agenda_flutter",
-    "short_name": "agenda_flutter",
+    "name": "Glamour Agenda",
+    "short_name": "Glamour",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F0A14",
+    "theme_color": "#E8527A",
+    "description": "Agenda do salão Glamour: agendamentos, clientes e estatísticas.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

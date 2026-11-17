@@ -10,6 +10,7 @@ A versão anterior a todas estas mudanças está guardada na tag Git
 
 | Data | Versão | O que mudou | Onde |
 | --- | --- | --- | --- |
+| 17/11/2026 | v4.2 | Ícone próprio e nome "Glamour Agenda" no celular | Frontend |
 | 09/11/2026 | v4.1 | Correção: calendário branco no estilo Claro | Frontend |
 | 06/11/2026 | v4 | Estilos do app (6 temas) | Frontend |
 | 30/10/2026 | v3 | Aba Clientes & Marketing | Frontend + Backend |
@@ -17,6 +18,19 @@ A versão anterior a todas estas mudanças está guardada na tag Git
 | 17/10/2026 | v1 | Desempenho, correções de bugs e testes | Frontend + Backend |
 
 ---
+
+## v4.2 — 17/11/2026 · Ícone próprio do app
+
+**Pedido:** ao instalar no celular aparecia o ícone padrão do Flutter e o nome `agenda_flutter`.
+
+- Novo ícone: calendário branco com uma flor, sobre degradê rosa → lilás (cores do estilo Rosé).
+- **Android:** `mipmap-*/ic_launcher.png` (aparelhos antigos) e ícone adaptativo para Android 8+
+  (`mipmap-anydpi-v26/ic_launcher.xml` + `ic_launcher_foreground.png` + fundo em
+  `drawable/ic_launcher_background.xml`), que o celular recorta no formato dele.
+- **Web/instalar pelo navegador:** `web/icons/*`, `favicon.png` e `Icon-apple-180.png` (iPhone).
+- Nome: "Glamour Agenda" no Android (`AndroidManifest.xml`), na aba do navegador e ao instalar
+  (`web/index.html`, `web/manifest.json`); cor da barra do navegador passou do azul do Flutter para rosa.
+- Nenhuma linha de código Dart mudou.
 
 ## v4.1 — 09/11/2026 · Correção do calendário no estilo Claro
 
